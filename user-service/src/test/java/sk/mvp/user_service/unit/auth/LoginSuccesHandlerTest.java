@@ -17,7 +17,7 @@ import sk.mvp.user_service.auth.dto.QUserDetail;
 import sk.mvp.user_service.auth.dto.TokenPair;
 import sk.mvp.user_service.auth.handler.LoginSuccesHandler;
 import sk.mvp.user_service.auth.service.ITokenService;
-import sk.mvp.user_service.common.config.JwtConfig;
+import sk.mvp.user_service.auth.jwt.JwtConfig;
 import sk.mvp.user_service.common.reddis.IRedisService;
 
 import javax.crypto.SecretKey;
@@ -97,12 +97,12 @@ public class LoginSuccesHandlerTest {
     private void setupJwtConfigMock() {
         // Stubbing all getters based on your property file values
         lenient().when(jwtConfig.getSecret()).thenReturn("very-long-secret-key-at-least-32-chars-long");
-        lenient().when(jwtConfig.getAccesTokenExpiration()).thenReturn(3600000L);
-        lenient().when(jwtConfig.getRefreshTokenExpiration()).thenReturn(86400000L);
+        lenient().when(jwtConfig.getAccessTokenExpirationInMls()).thenReturn(3600000L);
+        lenient().when(jwtConfig.getRefreshTokenExpirationInMls()).thenReturn(86400000L);
         lenient().when(jwtConfig.getCookieDomain()).thenReturn("localhost");
-        lenient().when(jwtConfig.isCookieIsSecure()).thenReturn(true);
+        lenient().when(jwtConfig.isJwtCookieIsSecure()).thenReturn(true);
         lenient().when(jwtConfig.isCookieIsHttpOnly()).thenReturn(true);
-        lenient().when(jwtConfig.getCoikieSameSite()).thenReturn("Lax");
+        lenient().when(jwtConfig.getCookieIsSameSite()).thenReturn("Lax");
         lenient().when(jwtConfig.getRefreshTokenCookiePath()).thenReturn("api/auth/web/refresh/tokens");
 
         // Stubbing the Keys (since @PostConstruct won't run on a mock)

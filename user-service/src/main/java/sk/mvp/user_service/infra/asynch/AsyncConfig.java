@@ -1,4 +1,4 @@
-package sk.mvp.user_service.common.config.async;
+package sk.mvp.user_service.infra.asynch;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

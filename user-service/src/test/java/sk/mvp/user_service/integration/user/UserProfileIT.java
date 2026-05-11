@@ -7,22 +7,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
-import sk.mvp.user_service.TestContainerConfig;
-import sk.mvp.user_service.async.outbox.job.OutboxRealyJob;
-import sk.mvp.user_service.auth.service.impl.AuthServiceImpl;
-import sk.mvp.user_service.common.config.JwtConfig;
+import sk.mvp.user_service.auth.jwt.JwtConfig;
 import sk.mvp.user_service.common.exception.data.ErrorType;
-import sk.mvp.user_service.common.utils.JwtUtil;
+import sk.mvp.user_service.auth.jwt.JwtProvider;
 import sk.mvp.user_service.entity.User;
 import sk.mvp.user_service.integration.BaseIntegrationTest;
 import sk.mvp.user_service.user.dto.ContactResp;
@@ -30,7 +21,6 @@ import sk.mvp.user_service.user.dto.UserProfile;
 import sk.mvp.user_service.user.repository.UserRepository;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -49,13 +39,13 @@ public class UserProfileIT extends BaseIntegrationTest {
 
     // helper
     private Cookie createAuthCookie(User user) {
-        String accessToken = JwtUtil.generateAccessToken(
+        String accessToken = JwtProvider.generateAccessToken(
                 user.getUsername(),
                 user.getTokenVersion(),
                 UUID.randomUUID().toString(),
                 user.getRolesAsStringWithPrefix(),
                 jwtConfig.getAccesKey(),
-                jwtConfig.getAccesTokenExpiration()
+                jwtConfig.getAccessTokenExpirationInMls()
         );
         return new Cookie("access_token", accessToken);
     }

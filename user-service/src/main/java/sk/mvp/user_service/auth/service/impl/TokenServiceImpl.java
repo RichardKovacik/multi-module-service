@@ -6,16 +6,14 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import sk.mvp.user_service.auth.service.ITokenService;
-import sk.mvp.user_service.common.config.JwtConfig;
 import sk.mvp.user_service.common.exception.data.ErrorType;
 import sk.mvp.user_service.auth.dto.QUserDetail;
 import sk.mvp.user_service.auth.dto.TokenPair;
 import sk.mvp.user_service.common.exception.QApplicationException;
-import sk.mvp.user_service.common.exception.InvalidTokenException;
 import sk.mvp.user_service.entity.User;
 import sk.mvp.user_service.user.repository.UserRepository;
 import sk.mvp.user_service.common.reddis.IRedisService;
-import sk.mvp.user_service.common.utils.JwtUtil;
+import sk.mvp.user_service.auth.jwt.JwtProvider;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -26,15 +24,15 @@ import java.util.stream.Collectors;
 @Service
 public class TokenServiceImpl implements ITokenService {
     private IRedisService redisService;
-    private JwtConfig jwtConfig;
     private UserRepository userRepository;
+    private JwtProvider jwtProvider;
 
     public TokenServiceImpl(IRedisService redisService,
-                            JwtConfig jwtConfig,
-                            UserRepository userRepository) {
+                            UserRepository userRepository,
+                            JwtProvider jwtProvider) {
         this.redisService = redisService;
-        this.jwtConfig = jwtConfig;
         this.userRepository = userRepository;
+        this.jwtProvider = jwtProvider;
     }
 
     @Override
@@ -43,20 +41,18 @@ public class TokenServiceImpl implements ITokenService {
         String jtiRefresh = UUID.randomUUID().toString();
         String jtiAccess = UUID.randomUUID().toString();
 
-        String accessToken = JwtUtil.generateAccessToken(userDetails.getUsername(),
+        String accessToken = jwtProvider.generateAccessToken(userDetails.getUsername(),
                 tokenVersion,
                 jtiAccess,
                 userDetails.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
-                        .toArray(String[]::new),
-                jwtConfig.getAccesKey(),
-                jwtConfig.getAccesTokenExpiration());
-        String refreshToken = JwtUtil.generateRefreshToken(jtiRefresh, jwtConfig.getRefreshKey(), jwtConfig.getRefreshTokenExpiration());
+                        .toArray(String[]::new));
+        String refreshToken = jwtProvider.generateRefreshToken(jtiRefresh);
         String userRefreshTokensKey = "auth:refresh:user:"+ userDetails.getUsername();
 
         //add refresh token to whitelist
         redisService.set("auth:refresh:token:"+ jtiRefresh, userDetails.getUsername(),
-                Duration.ofMillis(jwtConfig.getAccesTokenExpiration()));
+                jwtProvider.getRefreshTokenExpiration());
 
         // add refresh token to reddis userName: setTokens(jti,jti,jti)
         redisService.addValueToSet(userRefreshTokensKey, jtiRefresh);
@@ -68,9 +64,9 @@ public class TokenServiceImpl implements ITokenService {
     @Override
     public TokenPair refreshTokens(String refreshToken) {
         //check if refresh token is valid, signing, expiratuon, type, fields...
-        JwtUtil.validateRefreshToken(refreshToken, jwtConfig.getRefreshKey());
+        jwtProvider.validateRefreshToken(refreshToken);
         //parse claims from token
-        Claims claims = JwtUtil.parseClaimsFromJwtToken(refreshToken, jwtConfig.getRefreshKey());
+        Claims claims = jwtProvider.parseClaimsFromRefreshToken(refreshToken);
         //check if refresh is in whitelist
         String refreshKey = "auth:refresh:token:"+claims.getId();
         String userName = String.valueOf(redisService.get(refreshKey)
@@ -92,16 +88,16 @@ public class TokenServiceImpl implements ITokenService {
 
     @Override
     public QUserDetail getUserDetailFromAccessToken(String accessToken) {
-       return JwtUtil.getUserDetailFromAccessToken(accessToken, jwtConfig.getAccesKey());
+       return jwtProvider.getUserDetailFromAccessToken(accessToken);
     }
 
     @Override
     public Claims validateAccessToken(String accessToken) {
-        Claims claims = JwtUtil.parseClaimsFromJwtToken(accessToken, jwtConfig.getAccesKey());
+        Claims claims = jwtProvider.parseAccessToken(accessToken);
         String username = claims.getSubject();
 
         int tokenVersion = getTokenVersion(username);
-        JwtUtil.validateAccessToken(claims, accessToken, tokenVersion);
+        jwtProvider.validateAccessToken(claims, tokenVersion);
 
         // validate if accesa token is in blacklist
         String key = "auth:access:blacklist:" + claims.getId();
@@ -115,14 +111,14 @@ public class TokenServiceImpl implements ITokenService {
     @Override
     public void revokeAccessToken(String accessToken) {
         //add access token to blacklist for reaming time to live of token, used when logout
-        Claims claims = JwtUtil.parseClaimsFromJwtToken(accessToken, jwtConfig.getAccesKey());
+        Claims claims = jwtProvider.parseAccessToken(accessToken);
         String key = "auth:access:blacklist:" + claims.getId();
-        redisService.set(key, claims.getId(), JwtUtil.ttlUntilExpiration(claims));
+        redisService.set(key, claims.getId(), jwtProvider.ttlUntilExpiration(claims));
     }
 
     @Override
     public void revokeRefreshToken(String refreshToken) {
-        String tokenId = JwtUtil.parseClaimsFromJwtToken(refreshToken, jwtConfig.getRefreshKey()).getId();
+        String tokenId = jwtProvider.parseClaimsFromRefreshToken(refreshToken).getId();
         String key = "auth:refresh:token:" + tokenId;
         redisService.delete(key);
     }
@@ -147,7 +143,7 @@ public class TokenServiceImpl implements ITokenService {
         // save value to the redis cache
         redisService.set(key,
                 String.valueOf(tokenVersion),
-                Duration.ofMillis(jwtConfig.getAccesTokenExpiration()));
+                jwtProvider.getAccessTokenExpiration());
 
         return tokenVersion;
     }

@@ -1,30 +1,23 @@
 package sk.mvp.user_service.integration.auth;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
 import jakarta.transaction.Transactional;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import sk.mvp.user_service.auth.dto.LoginReq;
-import sk.mvp.user_service.common.config.JwtConfig;
-import sk.mvp.user_service.common.constants.AuthConts;
+import sk.mvp.user_service.auth.jwt.JwtConfig;
 import sk.mvp.user_service.common.exception.data.ErrorType;
 import sk.mvp.user_service.common.reddis.IRedisService;
-import sk.mvp.user_service.common.utils.JwtUtil;
-import sk.mvp.user_service.entity.User;
+import sk.mvp.user_service.auth.jwt.JwtProvider;
 import sk.mvp.user_service.integration.BaseIntegrationTest;
-import sk.mvp.user_service.user.repository.UserRepository;
 
 import java.util.stream.Stream;
 
@@ -84,7 +77,7 @@ public class LoginUserIT extends BaseIntegrationTest {
         Cookie refreshTokenCookie = result.getResponse().getCookie("refresh_token");
         //assert
         assert refreshTokenCookie != null;
-        Claims claims = JwtUtil.parseClaimsFromJwtToken(refreshTokenCookie.getValue(), jwtConfig.getRefreshKey());
+        Claims claims = JwtProvider.parseClaimsFromJwtToken(refreshTokenCookie.getValue(), jwtConfig.getRefreshKey());
         boolean isRefreshTokenAddToWhiteList = redisService.has("auth:refresh:token:"+ claims.getId());
 
         assertTrue(isRefreshTokenAddToWhiteList);

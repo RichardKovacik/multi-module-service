@@ -41,6 +41,9 @@ public class UserServiceImpl implements IUserService {
     @Override
     @Transactional
     public UserProfile getUserByUsername(String username) {
+        if (username == null || username.isEmpty()) {
+            throw new IllegalArgumentException("User name cannot be null or empty");
+        }
         User user = userRepository.findByUsername(username).orElseThrow(() ->
                 new QApplicationException("User with username " + username + " not found", ErrorType.USER_NOT_FOUND, null));
         return new UserProfile(user);

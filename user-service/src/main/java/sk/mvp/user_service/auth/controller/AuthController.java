@@ -1,140 +1,113 @@
 package sk.mvp.user_service.auth.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import sk.mvp.common.CookieUtils;
-import sk.mvp.user_service.auth.dto.VerificationTokenResponse;
-import sk.mvp.user_service.auth.dto.LoginReq;
-import sk.mvp.user_service.auth.dto.RefreshTokenReq;
-import sk.mvp.user_service.auth.dto.RegistrationReq;
-import sk.mvp.user_service.auth.dto.TokenPair;
+import sk.mvp.user_service.auth.jwt.JwtProvider;
+import sk.mvp.user_service.common.util.CookieUtil;
+import sk.mvp.user_service.auth.dto.*;
 import sk.mvp.user_service.auth.service.IAuthService;
-import sk.mvp.user_service.common.config.JwtConfig;
+import sk.mvp.user_service.common.exception.QApplicationException;
+import sk.mvp.user_service.common.exception.data.ErrorType;
 import sk.mvp.user_service.user.dto.UserProfile;
 
-import java.time.Duration;
-
 @RestController
-@RequestMapping("api/auth")
+@RequestMapping("api/v1/auth")
 public class AuthController {
     private IAuthService authService;
-    private JwtConfig jwtConfig;
+    private CookieUtil cookieUtil;
+    private JwtProvider jwtProvider;
 
-    public AuthController(IAuthService authService, JwtConfig jwtConfig) {
+    public AuthController(IAuthService authService,
+                          CookieUtil cookieUtil,
+                          JwtProvider jwtProvider) {
         this.authService = authService;
-        this.jwtConfig = jwtConfig;
+        this.cookieUtil = cookieUtil;
+        this.jwtProvider = jwtProvider;
     }
 
     @PostMapping(value = "/login")
-    public TokenPair login(@RequestBody @Valid LoginReq loginReq, HttpServletRequest request) {
-        return authService.loginUser(loginReq);
-    }
+    public ResponseEntity<?> login(@RequestBody @Valid LoginReq loginReq,
+                                   @RequestHeader(value = "X-Client-Type", defaultValue = "web") String clientType,
+                                   HttpServletResponse servletResponse) {
 
-//    /**
-//     * Endpint calls from client web apps
-//     * using http-only cookie
-//     * @param loginReq
-//     * @return tokens pair in cookie for browser
-//     */
-//    @PostMapping(value = "/web/login")
-//    public ResponseEntity<?> webLogin(@RequestBody @Valid LoginReq loginReq, HttpServletResponse response) {
-       // TokenPair tokenPair = authService.loginUser(loginReq);
-        //place refresh token in httopnly cookie
-//        ResponseCookie refreshCookie = CookieUtils.create("refresh_token",
-//                tokenPair.getRefreshToken(),
-//                jwtConfig.getCookieDomain(),
-//                Duration.ofMillis(jwtConfig.getRefreshTokenExpiration()),
-//                jwtConfig.isCookieIsHttpOnly(),
-//                jwtConfig.isCookieIsSecure(),
-//                jwtConfig.getRefreshTokenCookiePath(),
-//                jwtConfig.getCoikieSameSite()
-//        );
-//        //place acces token in http-only cookie
-//        ResponseCookie accessCookie = CookieUtils.create("access_token",
-//                tokenPair.getAccessToken(),
-//                jwtConfig.getCookieDomain(),
-//                Duration.ofMillis(jwtConfig.getAccesTokenExpiration()),
-//                jwtConfig.isCookieIsHttpOnly(),
-//                jwtConfig.isCookieIsSecure(),
-//                "/",
-//                jwtConfig.getCoikieSameSite()
-//        );
-//        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-//        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        TokenPair tokenPair = authService.loginUser(loginReq);
 
-//        return ResponseEntity.ok().build();
-//    }
+        // mobile login
+        if (clientType.equals("mobile")){
+            return ResponseEntity.ok(tokenPair);
+        }
+        // web cookie login
+        cookieUtil.setTokenCookies(servletResponse, tokenPair);
+        return ResponseEntity.ok().build();
 
-    @PostMapping(value = "/refresh/tokens")
-    public TokenPair refreshTokens(@RequestBody @Valid RefreshTokenReq refreshTokenReq) {
-        return authService.refreshTokens(refreshTokenReq.getToken());
     }
 
     /**
-     * Refresh token from cookie
+     * Refresh token from cookie or json
      * @return
      */
-    @PostMapping(value = "/web/refresh/tokens")
-    public ResponseEntity<?> refreshTokensWeb(@NotNull @CookieValue(name = "refresh_token") String refreshToken,
-                                              HttpServletResponse response) {
+    @PostMapping(value = "/refresh/tokens")
+    public ResponseEntity<?> refreshTokens(@CookieValue(name = "refresh_token", required = false) String refreshToken,
+                                              @RequestHeader(value = "X-Client-Type", defaultValue = "web", required = false) String clientType,
+                                              @RequestBody(required = false) @Valid RefreshTokenReq refreshRequest, // Pre mobil
+                                              HttpServletResponse servletResponse) {
+        String tokenToUse = (refreshToken != null) ? refreshToken :
+                (refreshRequest != null ? refreshRequest.getToken() : null);
 
-        TokenPair tokenPair = authService.refreshTokens(refreshToken);
-        //place refresh token in httopnly cookie
-        ResponseCookie refreshCookie = CookieUtils.create("refresh_token",
-                tokenPair.getRefreshToken(),
-                jwtConfig.getCookieDomain(),
-                Duration.ofMillis(jwtConfig.getRefreshTokenExpiration()),
-                jwtConfig.isCookieIsHttpOnly(),
-                jwtConfig.isCookieIsSecure(),
-                jwtConfig.getRefreshTokenCookiePath(),
-                jwtConfig.getCoikieSameSite()
-        );
-        //place acces token in http-only cookie
-        ResponseCookie accessCookie = CookieUtils.create("access_token",
-                tokenPair.getAccessToken(),
-                jwtConfig.getCookieDomain(),
-                Duration.ofMillis(jwtConfig.getAccesTokenExpiration()),
-                jwtConfig.isCookieIsHttpOnly(),
-                jwtConfig.isCookieIsSecure(),
-                "/",
-                jwtConfig.getCoikieSameSite()
-        );
-        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        if (tokenToUse == null || tokenToUse.isBlank()) {
+            throw new QApplicationException("Missing refresh token", ErrorType.AUTH_BAD_REQUEST, null);
+        }
+
+        TokenPair tokenPair = authService.refreshTokens(tokenToUse);
+
+        // mobile
+        if (clientType.equalsIgnoreCase("mobile")){
+            return ResponseEntity.ok(tokenPair);
+        }
+        // web cookie login
+        cookieUtil.setTokenCookies(servletResponse, tokenPair);
         return ResponseEntity.ok().build();
     }
 
-    //TODO: rview naming of rest api ednpoits url paths
-    @PostMapping(value = "/registration")
+    @PostMapping(value = "/register")
     public UserProfile createUser(@RequestBody @Valid RegistrationReq registrationReq) {
         return authService.registerUser(registrationReq);
     }
 
-    @GetMapping(value = "/email/verify")
+    @PostMapping(value = "/email/confirm")
     public VerificationTokenResponse verifyToken(@RequestParam("token") @NotNull @NotBlank String token) {
         return authService.verifyEmailVerificationToken(token);
     }
 
 
+    @PostMapping(value = "/logout")
+    public ResponseEntity<?> logoutUser(@CookieValue(name = "refresh_token", required = false) String cookieRefresh,
+                                        @CookieValue(name = "access_token", required = false) String cookieAccess,
+                                        @RequestHeader(value = "X-Client-Type", defaultValue = "web") String clientType,
+                                        @RequestBody(required = false) @Valid LogoutReq logoutReq,
+                                        @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+                                        HttpServletResponse response) {
 
-    @PostMapping(value = "/web/logout")
-    public ResponseEntity<?> logoutUser(@NotNull @CookieValue(name = "refresh_token") String refreshToken,
-                                  @NotNull @CookieValue(name = "access_token") String accessToken,
-                                  HttpServletResponse response) {
-        authService.logout(refreshToken, accessToken);
-        // clear tokens in cookie
-        ResponseCookie refreshCookie = CookieUtils.removed("refresh_token", jwtConfig.getCookieDomain(), true);
-        ResponseCookie accessCookie = CookieUtils.removed("access_token", jwtConfig.getCookieDomain(), true);
+        String access = jwtProvider.extractAccessToken(authHeader, cookieAccess);
+        String refresh = jwtProvider.extractRefreshToken(logoutReq, cookieRefresh);
 
-        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        if (refresh == null) {
+            throw new QApplicationException("Missing refresh token", ErrorType.AUTH_BAD_REQUEST, null);
+        }
+
+        //invalidate tokens in reddis
+        authService.logout(refresh, access);
+        // clear tokens in cookie only for web
+        if ("web".equalsIgnoreCase(clientType)) {
+            cookieUtil.clearTokenCookies(response);
+        }
+
+
         return ResponseEntity.ok().build();
     }
 }

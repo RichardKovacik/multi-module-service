@@ -3,15 +3,12 @@ package sk.mvp.multiservice.notifyservice.consumer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import sk.mvp.common.event.BaseEvent;
 import sk.mvp.common.event.EventType;
 import sk.mvp.common.payloads.PasswordResetPayload;
 import sk.mvp.common.payloads.UserRegisteredPayload;
-
-import static sk.mvp.common.event.EventType.USER_REGITERED_EVENT;
 
 @Component
 @RequiredArgsConstructor
@@ -33,11 +30,11 @@ public class KafkaUserEventListener {
             switch (type) {
                 case USER_REGITERED_EVENT -> {
                     var payload = convert(event.payload(), UserRegisteredPayload.class);
-                    handleRegistration(payload, event.userId());
+                    handleRegistrationEvent(payload, event.userId());
                 }
                 case PASSWORD_CHANGE_REQUESTED_EVENT -> {
                     var payload = convert(event.payload(), PasswordResetPayload.class);
-                    handlePasswordReset(payload, event.userId());
+                    handlePasswordResetEvent(payload, event.userId());
                 }
                 case UNKNOWN_EVENT -> log.warn("{} Recieved unknown event type:",event.metadata().correlationId());
             }
@@ -47,12 +44,12 @@ public class KafkaUserEventListener {
         }
     }
 
-    private void handleRegistration(UserRegisteredPayload payload, String userId) {
+    private void handleRegistrationEvent(UserRegisteredPayload payload, String userId) {
         log.info("Registrujem usera {} s emailom {}", userId, payload.email());
         // Biznis logika...
     }
 
-    private void handlePasswordReset(PasswordResetPayload payload, String userId) {
+    private void handlePasswordResetEvent(PasswordResetPayload payload, String userId) {
         log.info("Reset hesla pre email {}", payload.email());
         // Biznis logika...
     }

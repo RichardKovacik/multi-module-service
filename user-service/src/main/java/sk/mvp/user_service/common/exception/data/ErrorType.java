@@ -3,6 +3,7 @@ package sk.mvp.user_service.common.exception.data;
 public enum ErrorType {
     USER_NOT_FOUND(404),
     AUTH_USER_FAILED(401),
+    AUTH_BAD_REQUEST(400),
     AUTH_USER_DISABLED(403),
     AUTH_INVALID_CREDENTIALS(401),
     ROLE_NOT_FOUND(404),

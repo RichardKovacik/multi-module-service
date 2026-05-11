@@ -111,25 +111,6 @@ public class AuthServiceImpl implements IAuthService {
             );
         }catch (BadCredentialsException | UsernameNotFoundException e) {
             throw new QApplicationException(e.getMessage(), ErrorType.AUTH_INVALID_CREDENTIALS, null);
-//            Optional<String> value = redisService.get(loginAttemptsKey);
-//            if (value.isEmpty()) {
-//                //setup reddis collection with 5 min TTL
-//                redisService.set(loginAttemptsKey,"1", Duration.ofSeconds(300));
-//            } else {
-//                if (Integer.parseInt(value.get()) + 1 >= AuthConts.MAX_LOGIN_ATTEMPTS) {
-//                    // lock user to specific time, add to blacklist
-//                    redisService.set(lockedUserKey,"locked", Duration.ofSeconds(60));
-//                    // delete loginAttempts collection
-//                    redisService.delete(loginAttemptsKey);
-//                    // throw excpetion too many req
-//                    throw new ApplicationException("You have tried too many times, please try again later.",
-//                            ErrorType.TOO_MANY_REQUESTS,
-//                            null);
-//                }else {
-//                    redisService.increment(loginAttemptsKey);
-//                }
-//
-//            }
         }
         //success login, remove attempts counter collection in reddis if exists
         redisService.delete(loginAttemptsKey);
@@ -194,8 +175,11 @@ public class AuthServiceImpl implements IAuthService {
     public void logout(String refreshToken, String accessToken) {
         // remove refresh token from reddis
         jwtService.revokeRefreshToken(refreshToken);
-        // add acces token to blacklist
-        jwtService.revokeAccessToken(accessToken);
+        // add access token to blacklist, acces token could be null
+        if (accessToken != null) {
+            jwtService.revokeAccessToken(accessToken);
+        }
+
     }
 
     @Transactional

@@ -2,39 +2,51 @@ package sk.mvp.user_service.user.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import sk.mvp.user_service.common.config.JwtConfig;
+import sk.mvp.user_service.common.exception.InvalidTokenException;
+import sk.mvp.user_service.common.exception.QApplicationException;
+import sk.mvp.user_service.common.exception.data.ErrorType;
 import sk.mvp.user_service.user.dto.UserProfile;
 import sk.mvp.user_service.user.service.IUserService;
-import sk.mvp.user_service.common.utils.JwtUtil;
+import sk.mvp.user_service.auth.jwt.JwtProvider;
 
 @RestController
-@RequestMapping(value = "api/profile")
+@RequestMapping(value = "api/v1/profile")
 public class UserProfileController {
     private IUserService userService;
-    private JwtConfig jwtConfig;
+    private JwtProvider jwtProvider;
 
-    public UserProfileController(IUserService userService, JwtConfig jwtConfig) {
+    public UserProfileController(IUserService userService, JwtProvider jwtProvider) {
         this.userService = userService;
-        this.jwtConfig = jwtConfig;
+        this.jwtProvider = jwtProvider;
     }
 
-    @GetMapping(value = "/get")
-    public UserProfile getUserProfile(@NotNull @CookieValue(name = "access_token") String accesToken) {
-        String username = JwtUtil.parseClaimsFromJwtToken(accesToken, jwtConfig.getAccesKey()).getSubject();
+    @GetMapping(value = "/me")
+    public UserProfile getUserProfile(@CookieValue(name = "access_token", required = false) String cookieAccess,
+                                      @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+        String token = jwtProvider.extractAccessToken(authHeader, cookieAccess);
+
+        if (token == null || token.isEmpty()) {
+            throw new QApplicationException("Missing access token.", ErrorType.AUTH_BAD_REQUEST, null);
+        }
+
+        String username = jwtProvider.getUsernameFromAccessToken(token);
         return userService.getUserByUsername(username);
     }
 
-//    @GetMapping(value = "/by-email/{email}")
-//    public UserProfile getUserProfileByEmail(@PathVariable String email) {
-//        return userService.getUserByEmail(email);
-//    }
-
     @PatchMapping(value = "/update")
-    public ResponseEntity<?> updateUserProfileData(@NotNull @CookieValue(name = "access_token") String accesToken,
-                                                  @RequestBody @Valid UserProfile userProfileDTO) {
-        String username = JwtUtil.parseClaimsFromJwtToken(accesToken, jwtConfig.getAccesKey()).getSubject();
+    public ResponseEntity<?> updateUserProfileData(@CookieValue(name = "access_token", required = false) String cookieAccess,
+                                                   @RequestBody(required = false) @Valid UserProfile userProfileDTO,
+                                                   @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+        String token = jwtProvider.extractAccessToken(authHeader, cookieAccess);
+
+        if (token == null || token.isEmpty()) {
+            throw new QApplicationException("Missing access token.", ErrorType.AUTH_BAD_REQUEST, null);
+        }
+
+        String username = jwtProvider.getUsernameFromAccessToken(token);
         userService.updateUserProfile(username, userProfileDTO);
         return ResponseEntity.ok().build();
     }

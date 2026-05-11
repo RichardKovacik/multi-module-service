@@ -1,4 +1,4 @@
-package sk.mvp.user_service.auth.security;
+package sk.mvp.user_service.infra.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -69,6 +69,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
 
     }
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getServletPath();
+        return path.startsWith("/api/v1/auth/");
+    }
+
 
     private String parseJwt(HttpServletRequest request){
         String jwt = request.getHeader("Authorization");

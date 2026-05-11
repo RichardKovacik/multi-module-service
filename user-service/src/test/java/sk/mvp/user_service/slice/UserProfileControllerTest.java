@@ -16,9 +16,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import sk.mvp.user_service.common.config.JwtConfig;
-import sk.mvp.user_service.auth.security.JwtAuthFilter;
-import sk.mvp.user_service.common.utils.JwtUtil;
+import sk.mvp.user_service.auth.jwt.JwtConfig;
+import sk.mvp.user_service.infra.filter.JwtAuthFilter;
+import sk.mvp.user_service.auth.jwt.JwtProvider;
 import sk.mvp.user_service.user.controller.UserProfileController;
 import sk.mvp.user_service.user.dto.ContactResp;
 import sk.mvp.user_service.user.dto.UserProfile;
@@ -77,13 +77,13 @@ public class UserProfileControllerTest {
         UserProfile mockProfile = createMockProfile(username, "John", "Doe", "john@example.com");
 
         // 1. Mock the static JwtUtil
-        try (MockedStatic<JwtUtil> mockedJwt = mockStatic(JwtUtil.class)) {
+        try (MockedStatic<JwtProvider> mockedJwt = mockStatic(JwtProvider.class)) {
             // Mock the internal Claims object
             Claims claims = mock(Claims.class);
             when(claims.getSubject()).thenReturn(username);
 
             // Tell JwtUtil to return our mock claims when called with the test token and the key from config
-            mockedJwt.when(() -> JwtUtil.parseClaimsFromJwtToken(eq(token), eq(jwtConfig.getAccesKey())))
+            mockedJwt.when(() -> JwtProvider.parseClaimsFromJwtToken(eq(token), eq(jwtConfig.getAccesKey())))
                     .thenReturn(claims);
 
             // 2. Mock the Service behavior

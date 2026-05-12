@@ -39,6 +39,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/refresh/tokens",
                                 "/api/v1/auth/email/confirm",
+                                "/swagger-ui/**","/v3/api-docs/**",
                                 "/actuator/**").permitAll()
                         .requestMatchers("/api/v1/auth/logout").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")

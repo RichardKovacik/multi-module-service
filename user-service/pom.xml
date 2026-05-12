@@ -118,6 +118,12 @@
 			<scope>provided</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.1.0</version>
+		</dependency>
+
 		<!-- TESTING -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -146,16 +152,5 @@
 			<version>1.6.4</version>
 			<scope>test</scope> <!-- OPRAVENÉ z compile na test -->
 		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>org.springframework.kafka</groupId>-->
-<!--			<artifactId>spring-kafka-test</artifactId>-->
-<!--			<scope>test</scope>-->
-<!--		</dependency>-->
-		<!-- Ak ti testy v IDE stále nejdú, tento launcher tu nechaj, ale skús bez verzie -->
-<!--		<dependency>-->
-<!--			<groupId>org.junit.platform</groupId>-->
-<!--			<artifactId>junit-platform-launcher</artifactId>-->
-<!--			<scope>test</scope>-->
-<!--		</dependency>-->
 	</dependencies>
 </project>

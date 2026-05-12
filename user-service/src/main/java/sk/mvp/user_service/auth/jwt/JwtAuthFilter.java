@@ -1,4 +1,4 @@
-package sk.mvp.user_service.infra.filter;
+package sk.mvp.user_service.auth.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -19,7 +19,7 @@ public class QUserDetailsService implements UserDetailsService {
 
     @Override
     @Transactional
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException, AccountLockedExp {
+    public QUserDetail loadUserByUsername(String username) throws UsernameNotFoundException, AccountLockedExp {
         sk.mvp.user_service.entity.User user = userRepository.findByUsername(username).orElseThrow(() ->
                 new UsernameNotFoundException("Username not found"));
         return new QUserDetail(user);

@@ -16,7 +16,7 @@ import sk.mvp.user_service.auth.dto.RegistrationReq;
 import sk.mvp.user_service.auth.service.IAuthService;
 import sk.mvp.user_service.auth.jwt.JwtConfig;
 import sk.mvp.user_service.common.exception.data.ErrorType;
-import sk.mvp.user_service.infra.filter.JwtAuthFilter;
+import sk.mvp.user_service.auth.jwt.JwtAuthFilter;
 import sk.mvp.user_service.user.dto.ContactResp;
 import sk.mvp.user_service.user.dto.UserProfile;
 

@@ -10,24 +10,26 @@ import sk.mvp.user_service.admin.service.IAdminService;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/admin")
+@RequestMapping("api/v1/admin")
 public class AdminController {
     private IAdminService adminService;
 
     public AdminController(IAdminService adminService) {
         this.adminService = adminService;
     }
-    @DeleteMapping(value = "/revokeTokens")
-    public ResponseEntity<?> removeRole(@RequestParam String username) {
+
+    //TODO: tmeporary using userName -> better in redis have userId immutable variable
+    @DeleteMapping(value = "/users/{username}/sessions")
+    public ResponseEntity<?> logoutEverywhere(@PathVariable(name = "username") String username) {
         adminService.revokeTokens(username);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     /*
      set status of user BLOCKCKED, UNBLOCKED
      */
-    @PatchMapping(value = "/users/{userId}/status")
-    public ResponseEntity<?> setUserStatus(@PathVariable(name = "userId") Long userId,
+    @PatchMapping(value = "/users/{userid}/status")
+    public ResponseEntity<?> setUserStatus(@PathVariable(name = "userid") Long userId,
                                             @RequestBody @Valid UserStatusUpdateReq userStatusUpdateReq) {
         adminService.setUserStatus(userId, userStatusUpdateReq);
         return ResponseEntity.ok().build();
@@ -46,9 +48,9 @@ public class AdminController {
         //
         return ResponseEntity.ok().build();
     }
-    @GetMapping(value = "/user/list")
-    public List<UserSummary> getUsers(@RequestParam(defaultValue = "0") int page,
-                                      @RequestParam(defaultValue = "5") int size) {
+    @GetMapping(value = "/users")
+    public List<UserSummary> getUsers(@RequestParam(defaultValue = "0", name = "page") int page,
+                                      @RequestParam(defaultValue = "5", name = "size") int size) {
         return adminService.getUsers(page, size);
     }
 

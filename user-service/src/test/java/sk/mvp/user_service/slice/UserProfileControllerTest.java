@@ -17,7 +17,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import sk.mvp.user_service.auth.jwt.JwtConfig;
-import sk.mvp.user_service.infra.filter.JwtAuthFilter;
+import sk.mvp.user_service.auth.jwt.JwtAuthFilter;
 import sk.mvp.user_service.auth.jwt.JwtProvider;
 import sk.mvp.user_service.user.controller.UserProfileController;
 import sk.mvp.user_service.user.dto.ContactResp;

@@ -7,8 +7,10 @@ import org.springframework.boot.actuate.info.ProcessInfoContributor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -30,9 +32,13 @@ import sk.mvp.user_service.auth.dto.TokenPair;
 import sk.mvp.user_service.auth.dto.LoginReq;
 import sk.mvp.user_service.auth.service.IVerificationTokenService;
 import sk.mvp.user_service.common.constants.AuthConts;
+import sk.mvp.user_service.common.exception.AccountLockedExp;
 import sk.mvp.user_service.common.exception.QApplicationException;
 import sk.mvp.user_service.common.exception.RoleNotFoundException;
+import sk.mvp.user_service.common.exception.auth.InvalidInputDataException;
 import sk.mvp.user_service.common.exception.data.ErrorType;
+import sk.mvp.user_service.common.exception.data.QError;
+import sk.mvp.user_service.common.exception.data.QErrorResponse;
 import sk.mvp.user_service.common.reddis.IRedisService;
 import sk.mvp.user_service.entity.*;
 import sk.mvp.user_service.user.dto.UserProfile;
@@ -110,7 +116,13 @@ public class AuthServiceImpl implements IAuthService {
                     )
             );
         }catch (BadCredentialsException | UsernameNotFoundException e) {
-            throw new QApplicationException(e.getMessage(), ErrorType.AUTH_INVALID_CREDENTIALS, null);
+            throw new QApplicationException("Invalid username or password", ErrorType.AUTH_INVALID_CREDENTIALS, null);
+        }catch (DisabledException e) {
+            throw new QApplicationException(e.getMessage(), ErrorType.AUTH_USER_DISABLED, null);
+        }catch (AccountLockedExp e) {
+            throw new QApplicationException(e.getMessage(), ErrorType.TOO_MANY_REQUESTS, null);
+        } catch (AuthenticationException e) {
+            throw new QApplicationException(e.getMessage(), ErrorType.AUTH_USER_FAILED, null);
         }
         //success login, remove attempts counter collection in reddis if exists
         redisService.delete(loginAttemptsKey);

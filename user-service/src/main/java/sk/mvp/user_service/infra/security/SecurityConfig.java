@@ -13,7 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import sk.mvp.user_service.infra.filter.JwtAuthFilter;
+import sk.mvp.user_service.auth.jwt.JwtAuthFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -37,11 +37,11 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/register",
-                                "/api/v1/auth/refresh",
+                                "/api/v1/auth/refresh/tokens",
                                 "/api/v1/auth/email/confirm",
                                 "/actuator/**").permitAll()
                         .requestMatchers("/api/v1/auth/logout").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/profile/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
                 )

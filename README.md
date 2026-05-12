@@ -13,10 +13,35 @@ The project is built on a **Modular Monolith/Microservices-ready** architecture,
 *   **Common:** Shared domain objects and utilities.
 *   **Event-Driven:** Uses **Apache Kafka** with the **Transactional Outbox Pattern** to ensure data consistency between the database and message broker.
 
-> [!NOTE]  
-> *Insert your architecture diagram here*  
-> `![Architecture Diagram](./docs/assets/architecture.png)`
+### Architecture Diagram
 
+```mermaid
+graph LR
+    subgraph USD [USER SERVICE DOMAIN]
+        US[User Service]:::white
+        DB[(PostgreSQL)]:::blue
+        OB[(Outbox Table)]:::blue
+        RD[(Redis Cache)]:::red
+        US --- DB
+        US --- OB
+        US --- RD
+    end
+
+    US -- "produce event" --> K([ / / / KAFKA BROKER / / / ]):::yellow
+
+    subgraph ND [NOTIFICATION DOMAIN]
+        K -- "consume event" --> NS[Notification Service]:::white
+        NS --- E[(Event Store)]:::green
+        NS --> ES[Email Service]:::gray
+    end
+
+    classDef white fill:#fff,stroke:#333,color:#000
+    classDef blue fill:#aaccff,stroke:#333,color:#000
+    classDef red fill:#ffaaaa,stroke:#333,color:#000
+    classDef yellow fill:#ffcc00,stroke:#333,color:#000,stroke-width:3px
+    classDef green fill:#ccffcc,stroke:#333,color:#000
+    classDef gray fill:#eeeeee,stroke:#333,color:#000
+```
 ---
 
 ## 📦 1. Modules Breakdown

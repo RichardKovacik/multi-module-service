@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -19,11 +21,18 @@ import sk.mvp.user_service.auth.jwt.JwtAuthFilter;
 @EnableWebSecurity
 public class SecurityConfig {
     private JwtAuthFilter jwtAuthFilter;
+    private QPostAuthenticationChecker qPostAuthenticationChecker;
+    private QUserDetailsService qUserDetailsService;
+
     @Value("${server.ssl.enabled:false}")
     private boolean sslEnabled;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter,
+                          QPostAuthenticationChecker qPostAuthenticationChecker,
+                          QUserDetailsService qUserDetailsService) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.qPostAuthenticationChecker = qPostAuthenticationChecker;
+        this.qUserDetailsService = qUserDetailsService;
     }
 
     @Bean
@@ -57,16 +66,7 @@ public class SecurityConfig {
         }
         return http.build();
     }
-//    @Bean
-//    public QUsernamePasswordAuthFilter qUsernamePasswordAuthFilter(
-//            AuthenticationManager authenticationManager,
-//            AuthenticationFailureHandler failureHandler,
-//            AuthenticationSuccessHandler successHandler,
-//            ObjectMapper objectMapper,
-//            IRedisService redisService) {
-//        return new QUsernamePasswordAuthFilter(authenticationManager, successHandler, failureHandler, objectMapper, redisService
-//        );
-//    }
+
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
@@ -76,4 +76,19 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+
+        // set provierd encoder adn userdetail service
+        provider.setUserDetailsService(qUserDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+
+        // custom checker
+        provider.setPostAuthenticationChecks(qPostAuthenticationChecker);
+
+        return provider;
+    }
+
+
 }

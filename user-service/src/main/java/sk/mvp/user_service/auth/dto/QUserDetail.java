@@ -1,5 +1,6 @@
 package sk.mvp.user_service.auth.dto;
 
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,6 +18,7 @@ public class QUserDetail implements UserDetails {
     private String password;
     private List<SimpleGrantedAuthority> authorities;
     private boolean enabled;
+    @Getter
     private boolean emailVerified;
 
     public QUserDetail(String username, List<String> roles) {
@@ -86,7 +88,8 @@ public class QUserDetail implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return this.enabled && this.emailVerified;
+        return this.enabled;
     }
+
 
 }

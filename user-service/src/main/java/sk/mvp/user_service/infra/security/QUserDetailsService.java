@@ -1,7 +1,6 @@
-package sk.mvp.user_service.auth.service.impl;
+package sk.mvp.user_service.infra.security;
 
 import jakarta.transaction.Transactional;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;

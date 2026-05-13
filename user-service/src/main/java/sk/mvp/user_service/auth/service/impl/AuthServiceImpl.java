@@ -35,6 +35,7 @@ import sk.mvp.user_service.common.constants.AuthConts;
 import sk.mvp.user_service.common.exception.AccountLockedExp;
 import sk.mvp.user_service.common.exception.QApplicationException;
 import sk.mvp.user_service.common.exception.RoleNotFoundException;
+import sk.mvp.user_service.common.exception.auth.EmailNotVerifiedException;
 import sk.mvp.user_service.common.exception.auth.InvalidInputDataException;
 import sk.mvp.user_service.common.exception.data.ErrorType;
 import sk.mvp.user_service.common.exception.data.QError;
@@ -121,6 +122,8 @@ public class AuthServiceImpl implements IAuthService {
             throw new QApplicationException(e.getMessage(), ErrorType.AUTH_USER_DISABLED, null);
         }catch (AccountLockedExp e) {
             throw new QApplicationException(e.getMessage(), ErrorType.TOO_MANY_REQUESTS, null);
+        } catch (EmailNotVerifiedException e){
+            throw new QApplicationException(e.getMessage(), ErrorType.AUTH_EMAIL_NOT_VERIFIED, null);
         } catch (AuthenticationException e) {
             throw new QApplicationException(e.getMessage(), ErrorType.AUTH_USER_FAILED, null);
         }

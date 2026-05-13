@@ -12,6 +12,7 @@ The project is built on a **Modular Monolith/Microservices-ready** architecture,
 *   **Notify Service:** Asynchronous worker for external communications.
 *   **Common:** Shared domain objects and utilities.
 *   **Event-Driven:** Uses **Apache Kafka** with the **Transactional Outbox Pattern** to ensure data consistency between the database and message broker.
+*   **Database Migrations:** Uses **Flyway** for reliable, automated, and version-controlled database schema management during application startup.
 
 ### Architecture Diagram
 
@@ -73,6 +74,7 @@ An isolated service that reacts to system events.
 | **Framework** | Spring Boot 3.1.x |
 | **Security** | Spring Security & JWT |
 | **Database** | PostgreSQL |
+| **Database Migration** | Flyway |
 | **Caching** | Redis (Token Revocation & Rate Limiting) |
 | **Messaging** | Apache Kafka |
 | **Build Tool** | Maven |

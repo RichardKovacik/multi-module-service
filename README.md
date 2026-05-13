@@ -144,25 +144,53 @@ The system is fully documented using **OpenAPI 3 (Swagger)**.
 *   **JSON Definition:** `http://localhost:8081/v3/api-docs` (Import this link into **Postman** for a ready-to-use collection).
 
 ---
+## 🔒 3. Session Lifecycle & Token Revocation Architecture
 
-## 📝 6. Example Requests
+The system utilizes a multi-layered security verification strategy combining low-latency in-memory checks via Redis with absolute source-of-truth validation via PostgreSQL. This approach mitigates database bottleneck constraints during high-throughput API routing.
 
-### **Login (Mobile Client)**
-**POST** `/api/v1/auth/login`  
-*Header:* `X-Client-Type: mobile`
-```json
-{
-    "username": "richard",
-    "password": "secure_password"
-}
-```
+```mermaid
+graph TD
+    %% Ultra-High Contrast Theme Settings
+    classDef client fill:#FFD700,stroke:#000,stroke-width:2px,color:#000;
+    classDef security fill:#FF4500,stroke:#000,stroke-width:2px,color:#fff;
+    classDef database fill:#1E90FF,stroke:#000,stroke-width:2px,color:#fff;
+    classDef cache fill:#32CD32,stroke:#000,stroke-width:2px,color:#fff;
+    classDef process fill:#FFFFFF,stroke:#333,stroke-width:1px,color:#000;
 
-### **Update Profile**
-**PATCH** `/api/v1/profile/update`  
-*Header:* `Authorization: Bearer <access_token>`
-```json
-{
-    "firstName": "Richard",
-    "bio": "Software Engineer"
-}
+    %% --- LOGOUT FLOW ---
+    subgraph LOGOUT [1. LOGOUT FLOW]
+        A[User Client]:::client -->|POST /logout| B[Logout Handler]:::process
+        B -->|1. Delete| C[(Redis Whitelist)]:::cache
+        B -->|2. Add with TTL| D[(Redis Blacklist)]:::cache
+        B -->|3. Clear Web Client| E[HttpOnly Cookies]:::process
+    end
+
+    %% --- FILTERS FLOW ---
+    subgraph FILTER [2. JWT AUTHENTICATION FILTER]
+        F[Incoming Request]:::client --> G[JwtAuthenticationFilter]:::security
+        G -->|Step 1| H{"Is Token Valid?"}:::process
+        
+        H -->|No| I[401 Unauthorized]:::security
+        H -->|Yes| J{"Is Token Blacklisted?"}:::process
+        
+        J -->|Yes| I
+        J -->|No| K{"Check Redis Cache:<br>Is tokenVersion Match?"}:::cache
+        
+        K -->|Yes / Hit| L[Allow to API Layer]:::process
+        K -->|No / Miss| M[Fetch from PostgreSQL]:::database
+        
+        M -->|Sync & Cache| K
+        M -->|Version Mismatch| N[403 Forbidden]:::security
+    end
+
+    %% --- ADMIN FLOW ---
+    subgraph ADMIN [3. EMERGENCY BLOCK]
+        O[Admin Client]:::client -->|POST /block| P[Admin Endpoint]:::security
+        P -->|1. Increment tokenVersion| Q[(PostgreSQL DB)]:::database
+        P -->|2. Evict / Clear| R[(Redis Cache)]:::cache
+        P -->|3. Flush Session Set| S[(Redis Whitelist)]:::cache
+    end
+
+    LOGOUT -.-> FILTER
+    ADMIN -.-> FILTER
 ```

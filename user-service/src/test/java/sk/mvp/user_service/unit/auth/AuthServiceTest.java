@@ -20,7 +20,7 @@ import sk.mvp.user_service.auth.service.IVerificationTokenService;
 import sk.mvp.user_service.auth.service.impl.AuthServiceImpl;
 import sk.mvp.user_service.common.exception.QApplicationException;
 import sk.mvp.user_service.common.exception.data.ErrorType;
-import sk.mvp.user_service.common.reddis.IRedisService;
+import sk.mvp.user_service.infra.reddis.IRedisService;
 import sk.mvp.user_service.entity.Contact;
 import sk.mvp.user_service.entity.Gender;
 import sk.mvp.user_service.entity.User;

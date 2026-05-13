@@ -1,4 +1,4 @@
-package sk.mvp.user_service.common.reddis;
+package sk.mvp.user_service.infra.reddis;
 
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisTemplate;

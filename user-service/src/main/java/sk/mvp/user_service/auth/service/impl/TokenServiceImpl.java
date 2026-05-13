@@ -5,17 +5,18 @@ import jakarta.transaction.Transactional;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import sk.mvp.user_service.auth.config.LoginBruteForceConfig;
 import sk.mvp.user_service.auth.service.ITokenService;
 import sk.mvp.user_service.common.exception.data.ErrorType;
 import sk.mvp.user_service.auth.dto.QUserDetail;
 import sk.mvp.user_service.auth.dto.TokenPair;
 import sk.mvp.user_service.common.exception.QApplicationException;
 import sk.mvp.user_service.entity.User;
+import sk.mvp.user_service.infra.reddis.RedisCacheKey;
 import sk.mvp.user_service.user.repository.UserRepository;
-import sk.mvp.user_service.common.reddis.IRedisService;
+import sk.mvp.user_service.infra.reddis.IRedisService;
 import sk.mvp.user_service.auth.jwt.JwtProvider;
 
-import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -48,10 +49,10 @@ public class TokenServiceImpl implements ITokenService {
                         .map(GrantedAuthority::getAuthority)
                         .toArray(String[]::new));
         String refreshToken = jwtProvider.generateRefreshToken(jtiRefresh);
-        String userRefreshTokensKey = "auth:refresh:user:"+ userDetails.getUsername();
+        String userRefreshTokensKey = RedisCacheKey.AUTH_REFRESH_TOKEN_USER_SET.getKeyPrefix(userDetails.getUsername());
 
         //add refresh token to whitelist
-        redisService.set("auth:refresh:token:"+ jtiRefresh, userDetails.getUsername(),
+        redisService.set(RedisCacheKey.AUTH_REFRESH_TOKEN_WHITELIST.getKeyPrefix(jtiRefresh), userDetails.getUsername(),
                 jwtProvider.getRefreshTokenExpiration());
 
         // add refresh token to reddis userName: setTokens(jti,jti,jti)
@@ -67,18 +68,14 @@ public class TokenServiceImpl implements ITokenService {
         jwtProvider.validateRefreshToken(refreshToken);
         //parse claims from token
         Claims claims = jwtProvider.parseClaimsFromRefreshToken(refreshToken);
+        String refreshKey =  RedisCacheKey.AUTH_REFRESH_TOKEN_WHITELIST.getKeyPrefix(claims.getId());
+
         //check if refresh is in whitelist
-        String refreshKey = "auth:refresh:token:"+claims.getId();
         String userName = String.valueOf(redisService.get(refreshKey)
-                .orElseThrow(()-> new QApplicationException(
-                        "Refresh token reuse detected",
-                        ErrorType.TOKEN_REUSED_DETECTED,
-                        null)));
+                .orElseThrow(() -> new QApplicationException("Refresh token reuse detected", ErrorType.TOKEN_REUSED_DETECTED, null)));
         //delete actual refresh token from whitelist
         revokeRefreshToken(refreshToken);
-        //delete refresh token from Set reddis (cron job bude mazat na tzydnnej baze tokeny zo setu)
-
-        //get userdetai from db
+        //get userdetail from db
         User user = userRepository.findByUsername(userName)
                 .orElseThrow(() -> new QApplicationException("User with username " + userName + " not found", ErrorType.USER_NOT_FOUND, null));
 
@@ -99,8 +96,8 @@ public class TokenServiceImpl implements ITokenService {
         int tokenVersion = getTokenVersion(username);
         jwtProvider.validateAccessToken(claims, tokenVersion);
 
-        // validate if accesa token is in blacklist
-        String key = "auth:access:blacklist:" + claims.getId();
+        // validate if access token is in blacklist
+        String key = RedisCacheKey.AUTH_ACCESS_BLACKLIST.getKeyPrefix(claims.getId());
         if (redisService.has(key)) {
             throw new QApplicationException("Access token is in blacklist. Possible security breach !!", ErrorType.TOKEN_REUSED_DETECTED, null);
         }
@@ -112,14 +109,14 @@ public class TokenServiceImpl implements ITokenService {
     public void revokeAccessToken(String accessToken) {
         //add access token to blacklist for reaming time to live of token, used when logout
         Claims claims = jwtProvider.parseAccessToken(accessToken);
-        String key = "auth:access:blacklist:" + claims.getId();
+        String key = RedisCacheKey.AUTH_ACCESS_BLACKLIST.getKeyPrefix(claims.getId());
         redisService.set(key, claims.getId(), jwtProvider.ttlUntilExpiration(claims));
     }
 
     @Override
     public void revokeRefreshToken(String refreshToken) {
         String tokenId = jwtProvider.parseClaimsFromRefreshToken(refreshToken).getId();
-        String key = "auth:refresh:token:" + tokenId;
+        String key = RedisCacheKey.AUTH_REFRESH_TOKEN_WHITELIST.getKeyPrefix(tokenId);
         redisService.delete(key);
     }
 
@@ -130,7 +127,7 @@ public class TokenServiceImpl implements ITokenService {
             throw new IllegalArgumentException("User name cannot be null or empty");
         }
 
-        String key = "auth:access:user:tokenVersion:" + userName;
+        String key = RedisCacheKey.AUTH_ACCESS_TOKEN_USER_VERSION.getKeyPrefix(userName);
 
         // try hit redis chache
         Optional<String> cachedValue = redisService.get(key).map(Object::toString);
@@ -140,6 +137,7 @@ public class TokenServiceImpl implements ITokenService {
         // cache is empty, try hit real db
         int tokenVersion = userRepository.getTokenVersion(userName)
                 .orElseThrow(() -> new QApplicationException("User with username " + userName + " not found", ErrorType.USER_NOT_FOUND, null));
+
         // save value to the redis cache
         redisService.set(key,
                 String.valueOf(tokenVersion),
@@ -156,19 +154,19 @@ public class TokenServiceImpl implements ITokenService {
         userRepository.incrementTokenVersion(userName);
 
         //get all user refresh tokens from set
-        String userRefreshTokensKey = "auth:refresh:user:" + userName;
+        String userRefreshTokensKey = RedisCacheKey.AUTH_REFRESH_TOKEN_USER_SET.getKeyPrefix(userName);
         Set<String> refreshJtis = redisService.getSet(userRefreshTokensKey).stream().map(Object::toString).collect(Collectors.toSet());
 
         //delete refresh token from whitelist
         for(String key : refreshJtis) {
-            redisService.delete("auth:refresh:token:" + key);
+            redisService.delete(RedisCacheKey.AUTH_REFRESH_TOKEN_WHITELIST.getKeyPrefix(key));
         }
 
         //delete all refresh tokens from set
         redisService.delete(userRefreshTokensKey);
 
         // delete cached reddis  auth:user:tokenVersion
-        String tokenVersionKey = "auth:access:user:tokenVersion:" + userName;
+        String tokenVersionKey = RedisCacheKey.AUTH_ACCESS_TOKEN_USER_VERSION.getKeyPrefix(userName);
         redisService.delete(tokenVersionKey);
     }
 }

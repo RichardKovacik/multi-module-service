@@ -1,4 +1,4 @@
-package sk.mvp.user_service.common.reddis.config;
+package sk.mvp.user_service.infra.reddis.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

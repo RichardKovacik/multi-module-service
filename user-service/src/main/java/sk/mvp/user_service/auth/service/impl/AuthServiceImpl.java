@@ -3,7 +3,6 @@ package sk.mvp.user_service.auth.service.impl;
 import jakarta.transaction.Transactional;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.info.ProcessInfoContributor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -13,17 +12,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import sk.mvp.common.event.BaseEvent;
 import sk.mvp.common.factory.UserEventFactory;
 import sk.mvp.common.payloads.UserRegisteredPayload;
-import sk.mvp.user_service.async.outbox.dto.OutboxDTO;
 import sk.mvp.user_service.async.outbox.dto.OutboxTriggerEvent;
 import sk.mvp.user_service.async.outbox.service.IOutBoxService;
-import sk.mvp.user_service.async.outbox.service.OutBoxServiceImpl;
-import sk.mvp.user_service.async.producer.IEventProducer;
+import sk.mvp.user_service.auth.config.LoginBruteForceConfig;
 import sk.mvp.user_service.auth.dto.RegistrationReq;
 import sk.mvp.user_service.auth.dto.VerificationTokenResponse;
 import sk.mvp.user_service.auth.service.IAuthService;
@@ -36,20 +32,16 @@ import sk.mvp.user_service.common.exception.AccountLockedExp;
 import sk.mvp.user_service.common.exception.QApplicationException;
 import sk.mvp.user_service.common.exception.RoleNotFoundException;
 import sk.mvp.user_service.common.exception.auth.EmailNotVerifiedException;
-import sk.mvp.user_service.common.exception.auth.InvalidInputDataException;
 import sk.mvp.user_service.common.exception.data.ErrorType;
-import sk.mvp.user_service.common.exception.data.QError;
-import sk.mvp.user_service.common.exception.data.QErrorResponse;
-import sk.mvp.user_service.common.reddis.IRedisService;
+import sk.mvp.user_service.infra.reddis.IRedisService;
 import sk.mvp.user_service.entity.*;
+import sk.mvp.user_service.infra.reddis.RedisCacheKey;
 import sk.mvp.user_service.user.dto.UserProfile;
 import sk.mvp.user_service.user.repository.RoleRepository;
 import sk.mvp.user_service.user.repository.UserRepository;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -68,6 +60,7 @@ public class AuthServiceImpl implements IAuthService {
     private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
     private final ApplicationEventPublisher eventPublisher;
     private final PasswordEncoder passwordEncoder;
+    private LoginBruteForceConfig loginBruteForceConfig;
 
     public AuthServiceImpl(ITokenService jwtService,
                            AuthenticationManager authenticationManager,
@@ -78,7 +71,8 @@ public class AuthServiceImpl implements IAuthService {
                            IOutBoxService outBoxService,
                            ApplicationEventPublisher eventPublisher,
                            PasswordEncoder passwordEncoder,
-                           RoleRepository roleRepository) {
+                           RoleRepository roleRepository,
+                           LoginBruteForceConfig loginBruteForceConfig) {
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -89,17 +83,21 @@ public class AuthServiceImpl implements IAuthService {
         this.eventPublisher = eventPublisher;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
+        this.loginBruteForceConfig = loginBruteForceConfig;
     }
 
     @Override
     public TokenPair loginUser(LoginReq loginReq) {
-        String loginAttemptsKey = AuthConts.REDISS_AUTH_LOGIN_ATTEMPTS_USER_COLL + loginReq.username();
-        String lockedUserKey = AuthConts.REDISS_AUTH_BLACKLIST_USER_COLL + loginReq.username();
+        //TODO: upravit do samostantej serivce bruteForce ??
+        String loginAttemptsKey = RedisCacheKey.AUTH_LOGIN_ATTEMPTS.getKeyPrefix(loginReq.username());
+        String lockedUserKey = RedisCacheKey.AUTH_LOGIN_LOCKOUT.getKeyPrefix(loginReq.username());
 
         // result = -1 user is locked(reach max attemts of login)
         Long result = redisService.executeLuaScript("redis/login_attempts.lua",
-                List.of(loginAttemptsKey,lockedUserKey),
-                300, AuthConts.MAX_LOGIN_ATTEMPTS,60);
+                List.of(loginAttemptsKey, lockedUserKey),
+                loginBruteForceConfig.getBruteForceWindow().toSeconds(),
+                loginBruteForceConfig.getMaxAttempts(),
+                loginBruteForceConfig.getLockoutDuration().toSeconds());
 
         //if user is locked throw exception
         if (result == -1) {

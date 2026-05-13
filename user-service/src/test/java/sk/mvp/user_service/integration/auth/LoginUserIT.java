@@ -15,7 +15,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import sk.mvp.user_service.auth.dto.LoginReq;
 import sk.mvp.user_service.auth.jwt.JwtConfig;
 import sk.mvp.user_service.common.exception.data.ErrorType;
-import sk.mvp.user_service.common.reddis.IRedisService;
+import sk.mvp.user_service.infra.reddis.IRedisService;
 import sk.mvp.user_service.auth.jwt.JwtProvider;
 import sk.mvp.user_service.integration.BaseIntegrationTest;
 

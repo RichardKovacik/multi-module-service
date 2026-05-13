@@ -18,7 +18,7 @@ import sk.mvp.user_service.auth.dto.TokenPair;
 import sk.mvp.user_service.auth.handler.LoginSuccesHandler;
 import sk.mvp.user_service.auth.service.ITokenService;
 import sk.mvp.user_service.auth.jwt.JwtConfig;
-import sk.mvp.user_service.common.reddis.IRedisService;
+import sk.mvp.user_service.infra.reddis.IRedisService;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;

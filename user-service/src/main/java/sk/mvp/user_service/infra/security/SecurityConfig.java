@@ -38,7 +38,6 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-
                 // csfr simple config
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF
                 .cors(AbstractHttpConfigurer::disable) // Disable CORS (or configure if needed)

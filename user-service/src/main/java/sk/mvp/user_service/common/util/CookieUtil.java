@@ -17,34 +17,34 @@ public class CookieUtil {
         this.jwtConfig = jwtConfig;
     }
 
-    public ResponseCookie create(String key, String value) {
+    public ResponseCookie create(String key, String value, String path) {
         return ResponseCookie.from(key, value)
                 .domain(jwtConfig.getCookieDomain())
                 .maxAge(jwtConfig.getRefreshTokenExpiration())
                 .httpOnly(jwtConfig.isCookieIsHttpOnly())
                 .secure(jwtConfig.isJwtCookieIsSecure())
-                .path(key.equals(jwtConfig.getRefreshTokenCookieName()) ? jwtConfig.getRefreshTokenCookiePath() : "/")
+                .path(path)
                 .sameSite(jwtConfig.getCookieIsSameSite())
                 .build();
     }
-    public ResponseCookie remove(String key) {
+    public ResponseCookie remove(String key, String path) {
         return ResponseCookie.from(key, "")
                 .maxAge(Duration.ZERO)
                 .domain(jwtConfig.getCookieDomain())
-                .path("/")
+                .path(path)
                 .httpOnly(true)
                 .build();
     }
     public void setTokenCookies(HttpServletResponse response, TokenPair tokenPair) {
-        ResponseCookie refreshCookie = this.create(jwtConfig.getRefreshTokenCookieName(), tokenPair.getRefreshToken());
-        ResponseCookie accessCookie = this.create(jwtConfig.getAccessTokenCookieName(), tokenPair.getAccessToken());
+        ResponseCookie refreshCookie = this.create(jwtConfig.getRefreshTokenCookieName(), tokenPair.getRefreshToken(), jwtConfig.getRefreshTokenCookiePath());
+        ResponseCookie accessCookie = this.create(jwtConfig.getAccessTokenCookieName(), tokenPair.getAccessToken(), "/");
 
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
     }
     public void clearTokenCookies(HttpServletResponse response) {
-        ResponseCookie resCookie = this.remove(jwtConfig.getRefreshTokenCookieName());
-        ResponseCookie accCookie = this.remove(jwtConfig.getAccessTokenCookieName());
+        ResponseCookie resCookie = this.remove(jwtConfig.getRefreshTokenCookieName(), jwtConfig.getRefreshTokenCookiePath());
+        ResponseCookie accCookie = this.remove(jwtConfig.getAccessTokenCookieName(), "/");
         response.addHeader(HttpHeaders.SET_COOKIE, resCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, accCookie.toString());
     }

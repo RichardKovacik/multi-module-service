@@ -1,16 +1,15 @@
-package sk.mvp.user_service.async.outbox.repository;
+package sk.mvp.user_service.outbox.repository;
 
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
-import sk.mvp.user_service.async.outbox.entity.OutBoxStatus;
-import sk.mvp.user_service.async.outbox.entity.OutboxEvent;
+import sk.mvp.user_service.outbox.entity.OutBoxStatus;
+import sk.mvp.user_service.outbox.entity.OutboxEvent;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public interface OutBoxRepository extends JpaRepository<OutboxEvent, UUID> {

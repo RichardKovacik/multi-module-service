@@ -1,4 +1,4 @@
-package sk.mvp.user_service.async.outbox.dto;
+package sk.mvp.user_service.outbox.dto;
 
 import java.util.UUID;
 

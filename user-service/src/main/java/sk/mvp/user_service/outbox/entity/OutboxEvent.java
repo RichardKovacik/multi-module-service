@@ -1,4 +1,4 @@
-package sk.mvp.user_service.async.outbox.entity;
+package sk.mvp.user_service.outbox.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

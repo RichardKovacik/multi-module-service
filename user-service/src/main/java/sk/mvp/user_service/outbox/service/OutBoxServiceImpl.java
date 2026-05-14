@@ -1,18 +1,16 @@
-package sk.mvp.user_service.async.outbox.service;
+package sk.mvp.user_service.outbox.service;
 
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import sk.mvp.common.event.BaseEvent;
-import sk.mvp.user_service.async.outbox.entity.OutBoxStatus;
-import sk.mvp.user_service.async.outbox.entity.OutboxEvent;
-import sk.mvp.user_service.async.outbox.factory.OutboxFactory;
-import sk.mvp.user_service.async.outbox.repository.OutBoxRepository;
+import sk.mvp.user_service.outbox.entity.OutBoxStatus;
+import sk.mvp.user_service.outbox.entity.OutboxEvent;
+import sk.mvp.user_service.outbox.factory.OutboxFactory;
+import sk.mvp.user_service.outbox.repository.OutBoxRepository;
 import sk.mvp.user_service.async.producer.IEventProducer;
 import sk.mvp.user_service.common.exception.OutboxNotFoundException;
-import sk.mvp.user_service.common.exception.QApplicationException;
-import sk.mvp.user_service.common.exception.data.ErrorType;
 
 import java.time.Instant;
 import java.util.List;

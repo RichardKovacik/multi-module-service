@@ -12,13 +12,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import sk.mvp.common.event.BaseEvent;
 import sk.mvp.common.factory.UserEventFactory;
 import sk.mvp.common.payloads.UserRegisteredPayload;
-import sk.mvp.user_service.async.outbox.dto.OutboxTriggerEvent;
-import sk.mvp.user_service.async.outbox.service.IOutBoxService;
+import sk.mvp.user_service.outbox.dto.OutboxTriggerEvent;
+import sk.mvp.user_service.outbox.service.IOutBoxService;
 import sk.mvp.user_service.auth.config.LoginBruteForceConfig;
 import sk.mvp.user_service.auth.dto.RegistrationReq;
 import sk.mvp.user_service.auth.dto.VerificationTokenResponse;
@@ -27,22 +26,19 @@ import sk.mvp.user_service.auth.service.ITokenService;
 import sk.mvp.user_service.auth.dto.TokenPair;
 import sk.mvp.user_service.auth.dto.LoginReq;
 import sk.mvp.user_service.auth.service.IVerificationTokenService;
-import sk.mvp.user_service.common.constants.AuthConts;
 import sk.mvp.user_service.common.exception.AccountLockedExp;
 import sk.mvp.user_service.common.exception.QApplicationException;
-import sk.mvp.user_service.common.exception.RoleNotFoundException;
 import sk.mvp.user_service.common.exception.auth.EmailNotVerifiedException;
 import sk.mvp.user_service.common.exception.data.ErrorType;
 import sk.mvp.user_service.infra.reddis.IRedisService;
 import sk.mvp.user_service.entity.*;
 import sk.mvp.user_service.infra.reddis.RedisCacheKey;
 import sk.mvp.user_service.user.dto.UserProfile;
-import sk.mvp.user_service.user.repository.RoleRepository;
+import sk.mvp.user_service.user.factory.UserRegistrationFactory;
 import sk.mvp.user_service.user.repository.UserRepository;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 
 @Service
 public class AuthServiceImpl implements IAuthService {
@@ -50,7 +46,6 @@ public class AuthServiceImpl implements IAuthService {
     private AuthenticationManager authenticationManager;
     //TODO: nelubi sa mi ze tu volam repository priamo
     private UserRepository userRepository;
-    private RoleRepository roleRepository;
     private IRedisService redisService;
     private IVerificationTokenService verificationTokenService;
     private UserEventFactory userEventFactory;
@@ -59,8 +54,8 @@ public class AuthServiceImpl implements IAuthService {
     private String userEventTopicName;
     private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
     private final ApplicationEventPublisher eventPublisher;
-    private final PasswordEncoder passwordEncoder;
     private LoginBruteForceConfig loginBruteForceConfig;
+    private UserRegistrationFactory userRegistrationFactory;
 
     public AuthServiceImpl(ITokenService jwtService,
                            AuthenticationManager authenticationManager,
@@ -70,9 +65,8 @@ public class AuthServiceImpl implements IAuthService {
                            UserEventFactory userEventFactory,
                            IOutBoxService outBoxService,
                            ApplicationEventPublisher eventPublisher,
-                           PasswordEncoder passwordEncoder,
-                           RoleRepository roleRepository,
-                           LoginBruteForceConfig loginBruteForceConfig) {
+                           LoginBruteForceConfig loginBruteForceConfig,
+                           UserRegistrationFactory userRegistrationFactory) {
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -81,8 +75,7 @@ public class AuthServiceImpl implements IAuthService {
         this.userEventFactory = userEventFactory;
         this.outBoxService = outBoxService;
         this.eventPublisher = eventPublisher;
-        this.passwordEncoder = passwordEncoder;
-        this.roleRepository = roleRepository;
+        this.userRegistrationFactory = userRegistrationFactory;
         this.loginBruteForceConfig = loginBruteForceConfig;
     }
 
@@ -147,17 +140,8 @@ public class AuthServiceImpl implements IAuthService {
         //1. check if email and username is unique
         isEmailOrUsernameUnique(registrationReq.getEmail(), registrationReq.getUsername());
 
-        // create new instance of user
-        Contact contact = new Contact(registrationReq.getEmail());
-        User user = new User(registrationReq.getUsername(),
-                passwordEncoder.encode(registrationReq.getPassword()),
-                contact,
-                Gender.getValidGenderFromCode(registrationReq.getGenderCodeAsCharacter()));
-        //set user to new contact
-        contact.setUser(user);
-        //set default role to user
-        Role role = roleRepository.findByName("USER").orElseThrow(() -> new RoleNotFoundException("Role USER not found"));
-        user.setRoles(Set.of(role));
+        // create new instance of user using custom factory method
+        User user = userRegistrationFactory.createUnverifiedUser(registrationReq);
         // save user to DB
         User savedUser = userRepository.save(user);
         // save verificationToken to DB
@@ -168,7 +152,7 @@ public class AuthServiceImpl implements IAuthService {
         BaseEvent<UserRegisteredPayload> userRegisteredEvent = this.userEventFactory.createUserRegisteredEvent(
                 registrationReq.getEmail(),
                 "link",
-                user.getId().toString(),
+                savedUser.getId().toString(),
                 MDC.get(CORRELATION_ID_HEADER),
                 userEventTopicName);
         //store is in Outbox_events db

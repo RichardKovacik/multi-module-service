@@ -1,9 +1,8 @@
-package sk.mvp.user_service.async.outbox.dto;
+package sk.mvp.user_service.outbox.dto;
 
 import lombok.Builder;
-import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
-import sk.mvp.user_service.async.outbox.entity.OutBoxStatus;
+import sk.mvp.user_service.outbox.entity.OutBoxStatus;
 
 import java.time.Instant;
 import java.util.UUID;

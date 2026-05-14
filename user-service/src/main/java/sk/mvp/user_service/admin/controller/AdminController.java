@@ -54,7 +54,7 @@ public class AdminController {
         return adminService.getUsers(page, size);
     }
 
-    @GetMapping(value = "/user/filter/by-gender")
+    @GetMapping(value = "/users/filter/by-gender")
     public List<UserSummary> getUsersByGender(@RequestParam String genderCode,
                                               @RequestParam(defaultValue = "0") int page,
                                               @RequestParam(defaultValue = "5") int size) {

@@ -1,4 +1,4 @@
-package sk.mvp.user_service.async.outbox.factory;
+package sk.mvp.user_service.outbox.factory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
@@ -9,8 +9,8 @@ import sk.mvp.common.event.BaseEvent;
 import sk.mvp.common.event.EventType;
 import sk.mvp.common.payloads.PasswordResetPayload;
 import sk.mvp.common.payloads.UserRegisteredPayload;
-import sk.mvp.user_service.async.outbox.entity.OutBoxStatus;
-import sk.mvp.user_service.async.outbox.entity.OutboxEvent;
+import sk.mvp.user_service.outbox.entity.OutBoxStatus;
+import sk.mvp.user_service.outbox.entity.OutboxEvent;
 
 import java.time.Instant;
 import java.util.Map;

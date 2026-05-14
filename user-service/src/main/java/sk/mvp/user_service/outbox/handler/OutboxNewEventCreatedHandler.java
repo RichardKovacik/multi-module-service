@@ -1,4 +1,4 @@
-package sk.mvp.user_service.async.outbox.handler;
+package sk.mvp.user_service.outbox.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import sk.mvp.common.event.BaseEvent;
-import sk.mvp.user_service.async.outbox.dto.OutboxTriggerEvent;
-import sk.mvp.user_service.async.outbox.service.IOutBoxService;
+import sk.mvp.user_service.outbox.dto.OutboxTriggerEvent;
+import sk.mvp.user_service.outbox.service.IOutBoxService;
 import sk.mvp.user_service.async.producer.IEventProducer;
 
 @Component

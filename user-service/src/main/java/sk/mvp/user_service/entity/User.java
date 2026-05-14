@@ -1,11 +1,16 @@
 package sk.mvp.user_service.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 import java.util.Set;
 
 @Entity
 @Table(name = "users")
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class User {
     //TODO: create iniq indexes and Optimicstic locking
 
@@ -40,15 +45,15 @@ public class User {
     private Gender gender;
 
     // true if email has been verfied
-    private boolean emailVerified = false;
+    private boolean emailVerified;
 
     //init value sets to 1, accesTokenVersion
     @Column(name ="token_version", nullable = false)
-    private int tokenVersion = 1;
+    private int tokenVersion;
 
     // false if user was disabled by admin
     @Column(name = "enabled", nullable = false)
-    private boolean enabled = true;
+    private boolean enabled;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -101,6 +106,10 @@ public class User {
 
     public void setContact(Contact contact) {
         this.contact = contact;
+
+        if (contact != null) {
+            contact.setUser(this);
+        }
     }
 
     public void setId(Integer id) {

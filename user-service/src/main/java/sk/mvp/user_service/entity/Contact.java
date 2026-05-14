@@ -26,6 +26,7 @@ public class Contact {
         this.phoneNumber = phoneNumber;
     }
 
+
     public Contact(String email) {
         this.email = email;
     }

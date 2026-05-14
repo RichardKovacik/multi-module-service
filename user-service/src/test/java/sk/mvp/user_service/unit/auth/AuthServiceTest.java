@@ -12,7 +12,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import sk.mvp.common.factory.UserEventFactory;
-import sk.mvp.user_service.async.outbox.service.IOutBoxService;
+import sk.mvp.user_service.outbox.service.IOutBoxService;
 import sk.mvp.user_service.auth.dto.RegistrationReq;
 import sk.mvp.user_service.auth.dto.VerificationTokenResponse;
 import sk.mvp.user_service.auth.service.ITokenService;

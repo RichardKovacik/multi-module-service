@@ -1,10 +1,9 @@
-package sk.mvp.user_service.async.outbox.job;
+package sk.mvp.user_service.outbox.job;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
-import sk.mvp.user_service.async.outbox.service.IOutBoxService;
+import sk.mvp.user_service.outbox.service.IOutBoxService;
 
 //@Component
 @Slf4j

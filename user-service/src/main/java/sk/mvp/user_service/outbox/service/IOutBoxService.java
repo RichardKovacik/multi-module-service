@@ -1,8 +1,6 @@
-package sk.mvp.user_service.async.outbox.service;
+package sk.mvp.user_service.outbox.service;
 
 import sk.mvp.common.event.BaseEvent;
-import sk.mvp.user_service.async.outbox.dto.OutboxDTO;
-import sk.mvp.user_service.async.outbox.entity.OutboxEvent;
 import sk.mvp.user_service.common.exception.OutboxNotFoundException;
 
 import java.util.UUID;

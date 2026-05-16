@@ -8,7 +8,6 @@ import sk.mvp.common.event.EventMetadata;
 import sk.mvp.common.event.EventType;
 import sk.mvp.common.payloads.PasswordResetPayload;
 import sk.mvp.common.payloads.UserRegisteredPayload;
-import org.slf4j.MDC;
 
 import java.time.Instant;
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package sk.mvp.user_service.auth.dto;
+package sk.mvp.user_service.infra.security;
 
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;

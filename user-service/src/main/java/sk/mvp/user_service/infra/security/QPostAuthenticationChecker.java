@@ -3,7 +3,6 @@ package sk.mvp.user_service.infra.security;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsChecker;
 import org.springframework.stereotype.Component;
-import sk.mvp.user_service.auth.dto.QUserDetail;
 import sk.mvp.user_service.common.exception.auth.EmailNotVerifiedException;
 
 @Component

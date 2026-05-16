@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import sk.mvp.common.event.BaseEvent;
 import sk.mvp.common.factory.UserEventFactory;
 import sk.mvp.common.payloads.UserRegisteredPayload;
+import sk.mvp.user_service.auth.entity.VerificationToken;
+import sk.mvp.user_service.auth.entity.VerificationTokenType;
 import sk.mvp.user_service.outbox.dto.OutboxTriggerEvent;
 import sk.mvp.user_service.outbox.service.IOutBoxService;
 import sk.mvp.user_service.auth.config.LoginBruteForceConfig;
@@ -34,7 +36,7 @@ import sk.mvp.user_service.infra.reddis.IRedisService;
 import sk.mvp.user_service.entity.*;
 import sk.mvp.user_service.infra.reddis.RedisCacheKey;
 import sk.mvp.user_service.user.dto.UserProfile;
-import sk.mvp.user_service.user.factory.UserRegistrationFactory;
+import sk.mvp.user_service.auth.factory.UserRegistrationFactory;
 import sk.mvp.user_service.user.repository.UserRepository;
 
 import java.time.Instant;
@@ -145,7 +147,7 @@ public class AuthServiceImpl implements IAuthService {
         // save user to DB
         User savedUser = userRepository.save(user);
         // save verificationToken to DB
-        this.verificationTokenService.createVerificationToken(savedUser);
+        this.verificationTokenService.createVerificationToken(savedUser, VerificationTokenType.EMAIL_VERIFICATION);
         //Transactionl outbox pattern
 
         // create registrationEvent

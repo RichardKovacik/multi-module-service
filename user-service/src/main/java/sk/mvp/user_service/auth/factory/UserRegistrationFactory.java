@@ -1,4 +1,4 @@
-package sk.mvp.user_service.user.factory;
+package sk.mvp.user_service.auth.factory;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;

@@ -1,7 +1,7 @@
-package sk.mvp.user_service.entity;
+package sk.mvp.user_service.auth.entity;
 
 import jakarta.persistence.*;
-import jakarta.persistence.criteria.CriteriaBuilder;
+import sk.mvp.user_service.entity.User;
 
 import java.time.Instant;
 
@@ -21,6 +21,10 @@ public class VerificationToken {
 
     @Column(nullable = false, unique = true, length = 200)
     private String token;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private VerificationTokenType verificationTokenType;
 
     @Column(nullable = false)
     private Instant expiresAt;
@@ -47,10 +51,11 @@ public class VerificationToken {
 
     public VerificationToken() {}
 
-    public VerificationToken(String token, Instant expiresAt, User user) {
+    public VerificationToken(String token, Instant expiresAt, User user, VerificationTokenType verificationTokenType) {
         this.token = token;
         this.expiresAt = expiresAt;
         this.user = user;
+        this.verificationTokenType = verificationTokenType;
     }
 // =========================
     // Getters & Setters
@@ -96,5 +101,13 @@ public class VerificationToken {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public VerificationTokenType getVerificationTokenType() {
+        return verificationTokenType;
+    }
+
+    public void setVerificationTokenType(VerificationTokenType verificationTokenType) {
+        this.verificationTokenType = verificationTokenType;
     }
 }

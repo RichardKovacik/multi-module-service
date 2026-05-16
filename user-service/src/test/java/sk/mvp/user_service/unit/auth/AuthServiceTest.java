@@ -24,7 +24,7 @@ import sk.mvp.user_service.infra.reddis.IRedisService;
 import sk.mvp.user_service.entity.Contact;
 import sk.mvp.user_service.entity.Gender;
 import sk.mvp.user_service.entity.User;
-import sk.mvp.user_service.entity.VerificationToken;
+import sk.mvp.user_service.auth.entity.VerificationToken;
 import sk.mvp.user_service.user.repository.UserRepository;
 
 import java.time.Instant;

@@ -12,7 +12,7 @@ import sk.mvp.multiservice.notifyservice.service.SendGridEmailProviderImpl;
 import java.util.HashMap;
 import java.util.Map;
 
-@Component
+//@Component
 @Profile("dev")
 public class EmailSender implements CommandLineRunner {
 

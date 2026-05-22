@@ -2,7 +2,7 @@ package sk.mvp.multiservice.notifyservice.service;
 
 import sk.mvp.multiservice.notifyservice.dto.EmailRequest;
 
-public class SmtpEmailServiceImpl implements IEmailService {
+public class GmailSmtpEmailProviderImpl implements IEmailProvider {
     @Override
     public void sendEmail(EmailRequest request) {
 

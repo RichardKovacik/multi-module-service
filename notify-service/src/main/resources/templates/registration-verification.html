@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email Address</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+            color: #333333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        .header {
+            background-color: #4F46E5;
+            color: #ffffff;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 30px;
+            line-height: 1.6;
+        }
+        .content p {
+            margin-bottom: 24px;
+            font-size: 16px;
+        }
+        .button-container {
+            text-align: center;
+            margin: 35px 0;
+        }
+        .btn-verify {
+            background-color: #4F46E5;
+            color: #ffffff !important;
+            padding: 14px 30px;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 6px;
+            display: inline-block;
+            font-size: 16px;
+            box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
+            transition: background-color 0.2s;
+        }
+        .btn-verify:hover {
+            background-color: #4338CA;
+        }
+        .footer {
+            background-color: #f9fafb;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+        }
+        .fallback-link {
+            word-break: break-all;
+            color: #4F46E5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>Welcome to Our Platform!</h1>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <p>Hi,</p>
+        <p>Thank you for registering an account with us. Before we get started, we need you to confirm your email address so we know it is really you.</p>
+
+        <!-- Verification Button -->
+        <div class="button-container">
+            <a th:href="${verificationUrl}" class="btn-verify" target="_blank">Verify Email Address</a>
+        </div>
+
+        <p>If the button above does not work, copy and paste the following URL into your web browser:</p>
+        <p><a th:href="${verificationUrl}" th:text="${verificationUrl}" class="fallback-link"></a></p>
+
+        <p>If you did not create an account, please ignore this email.</p>
+        <p>Best regards,<br><strong>The Development Team</strong></p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>This is an automated message, please do not reply directly to this email.</p>
+        <p>&copy; 2026 YourCompany. All rights reserved.</p>
+    </div>
+</div>
+
+</body>
+</html>

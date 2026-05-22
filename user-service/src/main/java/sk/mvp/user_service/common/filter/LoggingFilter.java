@@ -68,7 +68,9 @@ public class LoggingFilter extends OncePerRequestFilter {
         HttpSession session = request.getSession(false);
         String sessionId = (session != null) ? session.getId() : "no-session";
 
-        String body = new String(request.getCachedPayload(), StandardCharsets.UTF_8);
+        String body = (request.getCachedPayload() != null && request.getCachedPayload().length > 0)
+                ? new String(request.getCachedPayload(), StandardCharsets.UTF_8)
+                : "";
         log.info("[{}] Incoming Request [{} {}], sessionId={}, headers=[{}], body={}",
                 correlationId,
                 request.getMethod(),

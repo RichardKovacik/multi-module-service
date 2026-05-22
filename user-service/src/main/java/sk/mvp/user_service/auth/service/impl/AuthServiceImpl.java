@@ -18,6 +18,7 @@ import sk.mvp.common.factory.UserEventFactory;
 import sk.mvp.common.payloads.UserRegisteredPayload;
 import sk.mvp.user_service.auth.entity.VerificationToken;
 import sk.mvp.user_service.auth.entity.VerificationTokenType;
+import sk.mvp.user_service.auth.service.VerificationLinkService;
 import sk.mvp.user_service.outbox.dto.OutboxTriggerEvent;
 import sk.mvp.user_service.outbox.service.IOutBoxService;
 import sk.mvp.user_service.auth.config.LoginBruteForceConfig;
@@ -58,6 +59,7 @@ public class AuthServiceImpl implements IAuthService {
     private final ApplicationEventPublisher eventPublisher;
     private LoginBruteForceConfig loginBruteForceConfig;
     private UserRegistrationFactory userRegistrationFactory;
+    private VerificationLinkService verificationLinkService;
 
     public AuthServiceImpl(ITokenService jwtService,
                            AuthenticationManager authenticationManager,
@@ -68,7 +70,7 @@ public class AuthServiceImpl implements IAuthService {
                            IOutBoxService outBoxService,
                            ApplicationEventPublisher eventPublisher,
                            LoginBruteForceConfig loginBruteForceConfig,
-                           UserRegistrationFactory userRegistrationFactory) {
+                           UserRegistrationFactory userRegistrationFactory, VerificationLinkService verificationLinkService) {
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -79,6 +81,7 @@ public class AuthServiceImpl implements IAuthService {
         this.eventPublisher = eventPublisher;
         this.userRegistrationFactory = userRegistrationFactory;
         this.loginBruteForceConfig = loginBruteForceConfig;
+        this.verificationLinkService = verificationLinkService;
     }
 
     @Override
@@ -147,13 +150,16 @@ public class AuthServiceImpl implements IAuthService {
         // save user to DB
         User savedUser = userRepository.save(user);
         // save verificationToken to DB
-        this.verificationTokenService.createVerificationToken(savedUser, VerificationTokenType.EMAIL_VERIFICATION);
+        VerificationToken verificationToken = this.verificationTokenService.createVerificationToken(savedUser, VerificationTokenType.EMAIL_VERIFICATION);
         //Transactionl outbox pattern
+
+        //construct email verification link
+        String link = verificationLinkService.generateConfirmationEmailUrl(verificationToken.getToken());
 
         // create registrationEvent
         BaseEvent<UserRegisteredPayload> userRegisteredEvent = this.userEventFactory.createUserRegisteredEvent(
                 registrationReq.getEmail(),
-                "link",
+                link,
                 savedUser.getId().toString(),
                 MDC.get(CORRELATION_ID_HEADER),
                 userEventTopicName);

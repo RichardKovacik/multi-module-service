@@ -119,7 +119,7 @@ public class AuthController {
         return authService.registerUser(registrationReq);
     }
 
-    @PostMapping(value = "/email/confirm")
+    @GetMapping(value = "/email/confirm")
     public VerificationTokenResponse verifyToken(@RequestParam("token") @NotNull @NotBlank String token) {
         return authService.verifyEmailVerificationToken(token);
     }

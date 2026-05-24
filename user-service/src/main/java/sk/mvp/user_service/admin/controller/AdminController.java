@@ -60,8 +60,8 @@ public class AdminController {
                                               @RequestParam(defaultValue = "5") int size) {
         return adminService.getUsersByGender(page, size, genderCode);
     }
-    @DeleteMapping(value = "/user/delete/by-username/{username}")
-    public ResponseEntity<?> deleteUserByUserName(@PathVariable String username) {
+    @DeleteMapping(value = "/users/{username}/delete")
+    public ResponseEntity<?> deleteUserByUserName(@PathVariable(name = "username") String username) {
         adminService.deleteUserbyUsername(username);
         return ResponseEntity.ok().build();
     }

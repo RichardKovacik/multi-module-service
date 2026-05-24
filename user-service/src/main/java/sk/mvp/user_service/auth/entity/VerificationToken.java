@@ -1,6 +1,8 @@
 package sk.mvp.user_service.auth.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import sk.mvp.user_service.entity.User;
 
 import java.time.Instant;
@@ -31,6 +33,7 @@ public class VerificationToken {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     @Column(nullable = false)

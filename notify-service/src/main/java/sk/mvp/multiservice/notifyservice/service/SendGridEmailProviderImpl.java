@@ -3,6 +3,7 @@ package sk.mvp.multiservice.notifyservice.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.client.RestClient;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -35,6 +36,7 @@ public class SendGridEmailProviderImpl implements IEmailProvider {
     }
 
     @Override
+    @Async
     public void sendEmail(EmailRequest request) {
             log.info("Sending email via SendGrid API to: {}", request.to());
             // 1. Thymeleaf prepare

@@ -31,7 +31,4 @@ CREATE UNIQUE INDEX idx_token_value ON verification_token (token);
 CREATE INDEX idx_token_user ON verification_token (user_id);
 
 ALTER TABLE verification_token
-    ADD CONSTRAINT FK_VERIFICATION_TOKEN_ON_USER FOREIGN KEY (user_id) REFERENCES users (id);
-
-ALTER TABLE verification_token
-    ADD CONSTRAINT uc_verification_token_token UNIQUE (token);
+    ADD CONSTRAINT FK_VERIFICATION_TOKEN_ON_USER FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE;

@@ -6,9 +6,9 @@ import sk.mvp.user_service.entity.User;
 import sk.mvp.user_service.auth.entity.VerificationToken;
 
 public interface IVerificationTokenService {
-    VerificationToken getVerificationToken(String token) throws QApplicationException;
+    VerificationToken getValidVerificationToken(String token);
     VerificationToken createVerificationToken(User user, VerificationTokenType verificationTokenType);
     void deleteVerificationToken(String token);
-    void invalidateVerificationToken(String token);
+
 
 }

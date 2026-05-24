@@ -26,8 +26,18 @@ public class VerificationTokenImpl implements IVerificationTokenService {
     }
 
     @Override
-    public VerificationToken getVerificationToken(String token) {
-        return this.repository.findByToken(token).orElseThrow(() -> new QApplicationException(ErrorType.VERIFICATION_TOKEN_INVALID));
+    public VerificationToken getValidVerificationToken(String token) {
+        VerificationToken foundedToken = repository.findByToken(token).orElseThrow(() -> new QApplicationException(ErrorType.VERIFICATION_TOKEN_INVALID));
+
+        if (foundedToken.getExpiresAt().isBefore(Instant.now())) {
+            throw new QApplicationException(ErrorType.VERIFICATION_TOKEN_EXPIRED);
+        }
+
+        if (foundedToken.isUsed()) {
+            throw new QApplicationException(ErrorType.VERIFICATION_TOKEN_INVALID);
+
+        }
+        return foundedToken;
     }
 
     @Override
@@ -39,11 +49,6 @@ public class VerificationTokenImpl implements IVerificationTokenService {
 
     @Override
     public void deleteVerificationToken(String token) {
-
-    }
-
-    @Override
-    public void invalidateVerificationToken(String token) {
 
     }
 }

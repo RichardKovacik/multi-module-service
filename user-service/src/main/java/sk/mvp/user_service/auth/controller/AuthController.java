@@ -121,7 +121,7 @@ public class AuthController {
 
     @GetMapping(value = "/email/confirm")
     public VerificationTokenResponse verifyToken(@RequestParam("token") @NotNull @NotBlank String token) {
-        return authService.verifyEmailVerificationToken(token);
+        return authService.verifyAndUpdateEmailVerificationToken(token);
     }
 
 

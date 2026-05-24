@@ -189,23 +189,14 @@ public class AuthServiceImpl implements IAuthService {
 
     @Transactional
     @Override
-    public VerificationTokenResponse verifyEmailVerificationToken(String verificationToken) {
-        VerificationToken foundedToken = verificationTokenService.getVerificationToken(verificationToken);
+    public VerificationTokenResponse verifyAndUpdateEmailVerificationToken(String verificationToken) {
+        VerificationToken foundedToken = verificationTokenService.getValidVerificationToken(verificationToken);
 
         User user = foundedToken.getUser();
         if (user.isEmailVerified()) {
             return new VerificationTokenResponse("Email is already verified");
         }
-
-        if (foundedToken.getExpiresAt().isBefore(Instant.now())) {
-            throw new QApplicationException(ErrorType.VERIFICATION_TOKEN_EXPIRED);
-        }
-
-        if (foundedToken.isUsed()) {
-            throw new QApplicationException(ErrorType.VERIFICATION_TOKEN_INVALID);
-
-        }
-        // hibernate has persistance context, and in the end save updted obejects to db
+        // hibernate has persistance context, and in the end save updated obejects to db
         foundedToken.setUsed(true);
         user.setEmailVerified(true);
 

@@ -94,9 +94,9 @@ public class AuthServiceTest {
     void verifyEmailVerificationToken_ShouldReturnToken_WhenTokenIsValid(){
         //arrange
         VerificationToken mockToken = createMockToken(false , false , Instant.now().plusSeconds(30));
-        when(verificationTokenService.getVerificationToken(mockToken.getToken())).thenReturn(mockToken);
+       // when(verificationTokenService.getVerificationToken(mockToken.getToken())).thenReturn(mockToken);
         //act
-        VerificationTokenResponse result = authService.verifyEmailVerificationToken(mockToken.getToken());
+        VerificationTokenResponse result = authService.verifyAndUpdateEmailVerificationToken(mockToken.getToken());
         //assert
         assertTrue(mockToken.isUsed());
         assertTrue(mockToken.getUser().isEmailVerified());
@@ -106,11 +106,11 @@ public class AuthServiceTest {
     void verifyEmailVerificationToken_ShouldReturnCustomExpirationExc_WhenTokenIsExpired(){
         //arrange
         VerificationToken mockToken = createMockToken(false , false , Instant.now().minusSeconds(30));
-        when(verificationTokenService.getVerificationToken(mockToken.getToken())).thenReturn(mockToken);
+        //when(verificationTokenService.getVerificationToken(mockToken.getToken())).thenReturn(mockToken);
         //act
         // 2. Act & Capture the exception
         QApplicationException exception = assertThrows(QApplicationException.class, () -> {
-            authService.verifyEmailVerificationToken(mockToken.getToken());
+            authService.verifyAndUpdateEmailVerificationToken(mockToken.getToken());
         });
         //assert
         assertEquals(ErrorType.VERIFICATION_TOKEN_EXPIRED, exception.getErrorType());

@@ -29,7 +29,7 @@ public class UserEventFactory {
         return BaseEvent.<UserRegisteredPayload>builder()
                 .eventId(UUID.randomUUID())
                 .createdAt(Instant.now())
-                .eventType(EventType.USER_REGITERED_EVENT.name())
+                .eventType(EventType.USER_REGISTERED.name())
                 .metadata(EventMetadata.builder()
                         .correlationId(correlationId)
                         .sourceService(applicationName)
@@ -44,7 +44,7 @@ public class UserEventFactory {
                 .build();
     }
 
-    public BaseEvent<PasswordResetPayload> createPasswordChangeRequestedEvent(String email,
+    public BaseEvent<PasswordResetPayload> createPasswordResetRequestedEvent(String email,
                                                                             String link,
                                                                             String userId,
                                                                               String correlationId,
@@ -52,7 +52,7 @@ public class UserEventFactory {
         return BaseEvent.<PasswordResetPayload>builder()
                 .eventId(UUID.randomUUID())
                 .createdAt(Instant.now())
-                .eventType(EventType.PASSWORD_CHANGE_REQUESTED_EVENT.name())
+                .eventType(EventType.PASSWORD_RESET_REQUESTED.name())
                 .metadata(EventMetadata.builder()
                         .correlationId(correlationId)
                         .sourceService(applicationName)

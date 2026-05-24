@@ -20,7 +20,6 @@ public class KafkaConfig {
         var jsonDeserializer = new JsonDeserializer<>(BaseEvent.class,objectMapper); // Použije už nakonfigurovaný mapper
         jsonDeserializer.addTrustedPackages("sk.mvp.common.event");
         jsonDeserializer.setUseTypeHeaders(false);
-        // Obalenie do ErrorHandlingDeserializer pre robustnosť
         var errorDeserializer = new ErrorHandlingDeserializer<>(jsonDeserializer);
 
         return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), errorDeserializer);

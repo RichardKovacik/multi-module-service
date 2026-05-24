@@ -22,8 +22,8 @@ public class OutboxFactory {
 
 
     private static final Map<String, Class<?>> TYPE_MAP = Map.of(
-            EventType.USER_REGITERED_EVENT.toString(), UserRegisteredPayload.class,
-            EventType.PASSWORD_CHANGE_REQUESTED_EVENT.toString(), PasswordResetPayload.class
+            EventType.USER_REGISTERED.toString(), UserRegisteredPayload.class,
+            EventType.PASSWORD_RESET_REQUESTED.toString(), PasswordResetPayload.class
             // Tu pridáš ďalšie eventy
     );
 

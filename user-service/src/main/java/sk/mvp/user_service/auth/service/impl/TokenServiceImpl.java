@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import sk.mvp.user_service.auth.service.ITokenService;
 import sk.mvp.user_service.common.exception.data.ErrorType;
 import sk.mvp.user_service.infra.security.QUserDetail;
-import sk.mvp.user_service.auth.dto.TokenPair;
+import sk.mvp.user_service.auth.dto.response.TokenPair;
 import sk.mvp.user_service.common.exception.QApplicationException;
 import sk.mvp.user_service.entity.User;
 import sk.mvp.user_service.infra.reddis.RedisCacheKey;

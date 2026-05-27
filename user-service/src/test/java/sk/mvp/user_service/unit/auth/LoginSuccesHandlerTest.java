@@ -14,7 +14,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import sk.mvp.user_service.infra.security.QUserDetail;
-import sk.mvp.user_service.auth.dto.TokenPair;
+import sk.mvp.user_service.auth.dto.response.TokenPair;
 import sk.mvp.user_service.auth.handler.LoginSuccesHandler;
 import sk.mvp.user_service.auth.service.ITokenService;
 import sk.mvp.user_service.auth.jwt.JwtConfig;

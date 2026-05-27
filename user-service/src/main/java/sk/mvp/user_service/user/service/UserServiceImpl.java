@@ -32,11 +32,19 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     @Transactional
-    public UserProfile getUserByEmail(String email) {
+    public UserProfile getUserProfileByEmail(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(() ->
                 new QApplicationException("User with email " + email + " not found", ErrorType.USER_NOT_FOUND, null));
         return new UserProfile(user);
     }
+
+    @Override
+    @Transactional
+    public User getUserByEmail(String email) {
+       return userRepository.findByEmail(email).orElseThrow(() ->
+                new QApplicationException("User with email " + email + " not found", ErrorType.USER_NOT_FOUND, null));
+    }
+
 
     @Override
     @Transactional

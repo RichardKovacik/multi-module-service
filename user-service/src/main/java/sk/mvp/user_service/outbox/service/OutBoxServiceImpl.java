@@ -31,14 +31,14 @@ public class OutBoxServiceImpl implements IOutBoxService {
 
     @Override
     @Transactional
-    public <T> void saveOutbox(BaseEvent<T> event) {
+    public void saveOutbox(BaseEvent<?> event) {
         OutboxEvent outboxEvent = outboxFactory.createPendingOutboxEvent(event);
         outBoxRepository.save(outboxEvent);
 
     }
 
     @Override
-    public <T> BaseEvent<T> findOutboxById(UUID id) throws OutboxNotFoundException {
+    public BaseEvent<?> findOutboxById(UUID id) throws OutboxNotFoundException {
         OutboxEvent event = outBoxRepository.findById(id).orElseThrow(() -> new OutboxNotFoundException("Outbox event with ID " + id + " not found."));
         return outboxFactory.toBaseEvent(event);
     }
@@ -62,7 +62,7 @@ public class OutBoxServiceImpl implements IOutBoxService {
 
     @Override
     @Transactional
-    public <T> void processPendingOutboxEventsBatch(int batchSize) {
+    public void processPendingOutboxEventsBatch(int batchSize) {
         //check if broker is up
         if (!eventProducer.isBrokerUp()){
             return;
@@ -76,7 +76,7 @@ public class OutBoxServiceImpl implements IOutBoxService {
         }
         for (OutboxEvent event : events) {
             try {
-                BaseEvent<T> eventToBeSend = outboxFactory.toBaseEvent(event);
+                BaseEvent<?> eventToBeSend = outboxFactory.toBaseEvent(event);
                 eventProducer.produce(eventToBeSend.destinationTopic(),eventToBeSend);
                 markAsProcessed(event.getEventId());
 

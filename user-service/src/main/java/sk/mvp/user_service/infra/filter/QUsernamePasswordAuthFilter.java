@@ -11,7 +11,7 @@
 //import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 //import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 //import org.springframework.stereotype.Component;
-//import sk.mvp.user_service.auth.dto.LoginReq;
+//import sk.mvp.user_service.auth.dto.request.LoginReq;
 //import sk.mvp.user_service.common.constants.AuthConts;
 //import sk.mvp.user_service.common.exception.AccountLockedExp;
 //import sk.mvp.user_service.common.exception.auth.InvalidInputDataException;

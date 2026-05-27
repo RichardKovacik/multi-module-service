@@ -2,7 +2,7 @@ package sk.mvp.user_service.auth.jwt;
 
 import io.jsonwebtoken.*;
 import org.springframework.stereotype.Component;
-import sk.mvp.user_service.auth.dto.LogoutReq;
+import sk.mvp.user_service.auth.dto.request.LogoutReq;
 import sk.mvp.user_service.infra.security.QUserDetail;
 import sk.mvp.user_service.common.exception.QApplicationException;
 import sk.mvp.user_service.common.exception.data.ErrorType;

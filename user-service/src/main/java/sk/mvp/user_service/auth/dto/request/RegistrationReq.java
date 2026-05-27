@@ -1,4 +1,4 @@
-package sk.mvp.user_service.auth.dto;
+package sk.mvp.user_service.auth.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.*;

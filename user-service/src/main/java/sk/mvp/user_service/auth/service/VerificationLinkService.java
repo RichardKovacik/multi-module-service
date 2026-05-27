@@ -1,33 +1,26 @@
 package sk.mvp.user_service.auth.service;
 
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
+import sk.mvp.user_service.auth.config.BackendUrlConfig;
+import sk.mvp.user_service.auth.entity.VerificationTokenType;
 
 @Service
+@RequiredArgsConstructor
 public class VerificationLinkService {
+    private final BackendUrlConfig urlConfig;
 
-    @Value("${app.backend.protocol}")
-    private String protocol;
+    public String generateVerificationUrl(VerificationTokenType tokenType, String token) {
+        String specificPath = urlConfig.getUriFor(tokenType);
 
-    @Value("${app.backend.domain}")
-    private String domain;
-
-    @Value("${app.backend.port}")
-    private String port;
-
-    @Value("${app.backend.email-confirm-uri}")
-    private String emailConfirmUri;
-
-    public String generateConfirmationEmailUrl(String generatedToken) {
         return UriComponentsBuilder.newInstance()
-                .scheme(protocol)      // http
-                .host(domain)          // localhost
-                .port(port)            // 8081
-                .path(emailConfirmUri) // /api/v1/auth/email/confirm
-                .queryParam("token", generatedToken) // ?token=XYZ
+                .scheme(urlConfig.getProtocol())
+                .host(urlConfig.getDomain())
+                .port(urlConfig.getPort())
+                .path(specificPath)
+                .queryParam("token", token)
                 .build()
                 .toUriString();
     }
 }
-

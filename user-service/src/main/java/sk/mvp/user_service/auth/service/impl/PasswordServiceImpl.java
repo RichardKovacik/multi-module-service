@@ -10,6 +10,7 @@ import sk.mvp.common.event.BaseEvent;
 import sk.mvp.common.factory.UserEventFactory;
 import sk.mvp.common.payloads.PasswordResetPayload;
 import sk.mvp.user_service.auth.dto.request.PasswordResetInitiateReq;
+import sk.mvp.user_service.auth.dto.request.PasswordResetSubmitReq;
 import sk.mvp.user_service.auth.dto.response.VerificationTokenResponse;
 import sk.mvp.user_service.auth.entity.VerificationToken;
 import sk.mvp.user_service.auth.entity.VerificationTokenType;
@@ -72,6 +73,7 @@ public class PasswordServiceImpl implements IPasswordService {
     }
 
     @Override
+    @Transactional
     public void passwordResetTokenValidate(String token) {
         if (token.isBlank() || token.isEmpty()) {
             throw new IllegalArgumentException("Reset password token is empty");
@@ -82,7 +84,13 @@ public class PasswordServiceImpl implements IPasswordService {
     }
 
     @Override
-    public VerificationTokenResponse verifyAndUpdatePasswordResetToken(String tokenValue, String newPassword) {
-        return null;
+    @Transactional
+    public void verifyAndUpdatePasswordResetToken(PasswordResetSubmitReq request) {
+        VerificationToken validToken = verificationTokenService.getValidVerificationToken(request.token(), VerificationTokenType.PASSWORD_RESET);
+        //set token to used
+        validToken.setUsed(true);
+        //set new hashed password
+        User user = validToken.getUser();
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
     }
 }

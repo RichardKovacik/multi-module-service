@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sk.mvp.user_service.auth.dto.request.PasswordResetInitiateReq;
+import sk.mvp.user_service.auth.dto.request.PasswordResetSubmitReq;
 import sk.mvp.user_service.auth.dto.response.VerificationTokenResponse;
 import sk.mvp.user_service.auth.service.IPasswordService;
 
@@ -25,12 +26,12 @@ public class PasswordController {
     }
 
     @PostMapping(value = "/reset")
-    public ResponseEntity<?> submitPasswordReset(@RequestParam("token") @NotNull @NotBlank String token) {
-        //return authService.verifyAndUpdateEmailVerificationToken(token);
+    public ResponseEntity<?> submitPasswordReset(@Valid @RequestBody PasswordResetSubmitReq request) {
+        passwordService.verifyAndUpdatePasswordResetToken(request);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/reset/validate-token")
+    @GetMapping(value = "/reset/validate-token")
     public ResponseEntity<?> validateToken(@RequestParam("token") @NotNull @NotBlank String token) {
         passwordService.passwordResetTokenValidate(token);
         return ResponseEntity.ok().build();

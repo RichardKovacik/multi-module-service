@@ -1,4 +1,4 @@
-package sk.mvp.user_service.auth.dto;
+package sk.mvp.user_service.auth.dto.request;
 
 public class RefreshTokenReq {
     private String token;

@@ -3,7 +3,7 @@ package sk.mvp.user_service.auth.service;
 import io.jsonwebtoken.Claims;
 import org.springframework.security.core.userdetails.UserDetails;
 import sk.mvp.user_service.infra.security.QUserDetail;
-import sk.mvp.user_service.auth.dto.TokenPair;
+import sk.mvp.user_service.auth.dto.response.TokenPair;
 import sk.mvp.user_service.common.exception.InvalidTokenException;
 
 public interface ITokenService {

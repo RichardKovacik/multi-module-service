@@ -2,7 +2,7 @@ package sk.mvp.user_service.auth.factory;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import sk.mvp.user_service.auth.dto.RegistrationReq;
+import sk.mvp.user_service.auth.dto.request.RegistrationReq;
 import sk.mvp.user_service.common.exception.RoleNotFoundException;
 import sk.mvp.user_service.entity.Contact;
 import sk.mvp.user_service.entity.Gender;

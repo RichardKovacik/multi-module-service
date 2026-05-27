@@ -12,7 +12,7 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import sk.mvp.user_service.auth.controller.AuthController;
-import sk.mvp.user_service.auth.dto.RegistrationReq;
+import sk.mvp.user_service.auth.dto.request.RegistrationReq;
 import sk.mvp.user_service.auth.service.IAuthService;
 import sk.mvp.user_service.auth.jwt.JwtConfig;
 import sk.mvp.user_service.common.exception.data.ErrorType;

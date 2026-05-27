@@ -6,10 +6,10 @@ import sk.mvp.user_service.common.exception.OutboxNotFoundException;
 import java.util.UUID;
 
 public interface IOutBoxService {
-    <T>void saveOutbox(BaseEvent<T> event);
-    <T> BaseEvent<T> findOutboxById(UUID id) throws OutboxNotFoundException;
+    void saveOutbox(BaseEvent<?> event);
+    BaseEvent<?> findOutboxById(UUID id) throws OutboxNotFoundException;
     void markAsProcessed(UUID id);
-    <T> void processPendingOutboxEventsBatch(int batchSize);
+    void processPendingOutboxEventsBatch(int batchSize);
 
 
 }

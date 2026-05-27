@@ -20,10 +20,10 @@ public class OutboxNewEventCreatedHandler {
 
     @Async("outboxExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public<T> void handleNewOutboxEventCreated(OutboxTriggerEvent event) {
+    public void handleNewOutboxEventCreated(OutboxTriggerEvent event) {
         log.info("Handling internal event new outbox created: {}", event.eventId());
         try {
-            BaseEvent<T> deserializedPayload = outBoxService.findOutboxById(event.eventId());
+            BaseEvent<?> deserializedPayload = outBoxService.findOutboxById(event.eventId());
 
             eventProducer.produce(deserializedPayload.destinationTopic(), deserializedPayload);
             log.info("[{}] Event {} sucessefully to kafka", deserializedPayload.metadata().correlationId(), event.eventId());

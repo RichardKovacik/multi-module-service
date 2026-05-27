@@ -22,12 +22,12 @@ import sk.mvp.user_service.auth.service.VerificationLinkService;
 import sk.mvp.user_service.outbox.dto.OutboxTriggerEvent;
 import sk.mvp.user_service.outbox.service.IOutBoxService;
 import sk.mvp.user_service.auth.config.LoginBruteForceConfig;
-import sk.mvp.user_service.auth.dto.RegistrationReq;
-import sk.mvp.user_service.auth.dto.VerificationTokenResponse;
+import sk.mvp.user_service.auth.dto.request.RegistrationReq;
+import sk.mvp.user_service.auth.dto.response.VerificationTokenResponse;
 import sk.mvp.user_service.auth.service.IAuthService;
 import sk.mvp.user_service.auth.service.ITokenService;
-import sk.mvp.user_service.auth.dto.TokenPair;
-import sk.mvp.user_service.auth.dto.LoginReq;
+import sk.mvp.user_service.auth.dto.response.TokenPair;
+import sk.mvp.user_service.auth.dto.request.LoginReq;
 import sk.mvp.user_service.auth.service.IVerificationTokenService;
 import sk.mvp.user_service.common.exception.AccountLockedExp;
 import sk.mvp.user_service.common.exception.QApplicationException;
@@ -40,7 +40,6 @@ import sk.mvp.user_service.user.dto.UserProfile;
 import sk.mvp.user_service.auth.factory.UserRegistrationFactory;
 import sk.mvp.user_service.user.repository.UserRepository;
 
-import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -70,7 +69,8 @@ public class AuthServiceImpl implements IAuthService {
                            IOutBoxService outBoxService,
                            ApplicationEventPublisher eventPublisher,
                            LoginBruteForceConfig loginBruteForceConfig,
-                           UserRegistrationFactory userRegistrationFactory, VerificationLinkService verificationLinkService) {
+                           UserRegistrationFactory userRegistrationFactory,
+                           VerificationLinkService verificationLinkService) {
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -154,7 +154,7 @@ public class AuthServiceImpl implements IAuthService {
         //Transactionl outbox pattern
 
         //construct email verification link
-        String link = verificationLinkService.generateConfirmationEmailUrl(verificationToken.getToken());
+        String link = verificationLinkService.generateVerificationUrl(VerificationTokenType.EMAIL_VERIFICATION, verificationToken.getToken());
 
         // create registrationEvent
         BaseEvent<UserRegisteredPayload> userRegisteredEvent = this.userEventFactory.createUserRegisteredEvent(
@@ -190,7 +190,8 @@ public class AuthServiceImpl implements IAuthService {
     @Transactional
     @Override
     public VerificationTokenResponse verifyAndUpdateEmailVerificationToken(String verificationToken) {
-        VerificationToken foundedToken = verificationTokenService.getValidVerificationToken(verificationToken);
+        VerificationToken foundedToken = verificationTokenService.getValidVerificationToken(verificationToken,
+                VerificationTokenType.EMAIL_VERIFICATION);
 
         User user = foundedToken.getUser();
         if (user.isEmailVerified()) {
@@ -203,6 +204,17 @@ public class AuthServiceImpl implements IAuthService {
         return new VerificationTokenResponse("Email successfully verified");
     }
 
+//    @Override
+//    @Transactional
+//    public VerificationTokenResponse verifyAndUpdatePasswordResetVerificationToken(String token, String newPassword) {
+//        VerificationToken foundedToken = verificationTokenService.getValidVerificationToken(token);
+//        //token is valid continues flow
+//        User user = foundedToken.getUser();
+//        //update db
+//        user.setPassword(passwordEncoder.encode(newPassword));
+//        foundedToken.setUsed(true);
+//        return new VerificationTokenResponse("Password reset successfully processed");
+//    }
 
     private void isEmailOrUsernameUnique(String email, String username) {
         userRepository.findByEmailOrUsername(email, username).ifPresent(user -> {

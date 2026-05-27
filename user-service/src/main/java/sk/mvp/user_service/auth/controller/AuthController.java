@@ -15,9 +15,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import sk.mvp.user_service.auth.dto.request.LoginReq;
+import sk.mvp.user_service.auth.dto.request.LogoutReq;
+import sk.mvp.user_service.auth.dto.request.RefreshTokenReq;
+import sk.mvp.user_service.auth.dto.request.RegistrationReq;
+import sk.mvp.user_service.auth.dto.response.TokenPair;
+import sk.mvp.user_service.auth.dto.response.VerificationTokenResponse;
 import sk.mvp.user_service.auth.jwt.JwtProvider;
 import sk.mvp.user_service.common.util.CookieUtil;
-import sk.mvp.user_service.auth.dto.*;
 import sk.mvp.user_service.auth.service.IAuthService;
 import sk.mvp.user_service.common.exception.QApplicationException;
 import sk.mvp.user_service.common.exception.data.ErrorType;
@@ -84,8 +89,8 @@ public class AuthController {
     public ResponseEntity<?> refreshTokens(@CookieValue(name = "refresh_token", required = false) String refreshToken,
                                            @Parameter(description = "Client platform type (web/mobile)", example = "web")
                                            @RequestHeader(value = "X-Client-Type", defaultValue = "web", required = false) String clientType,
-                                              @RequestBody(required = false) @Valid RefreshTokenReq refreshRequest, // Pre mobil
-                                              HttpServletResponse servletResponse) {
+                                           @RequestBody(required = false) @Valid RefreshTokenReq refreshRequest, // Pre mobil
+                                           HttpServletResponse servletResponse) {
         String tokenToUse = (refreshToken != null) ? refreshToken :
                 (refreshRequest != null ? refreshRequest.getToken() : null);
 
@@ -120,10 +125,9 @@ public class AuthController {
     }
 
     @GetMapping(value = "/email/confirm")
-    public VerificationTokenResponse verifyToken(@RequestParam("token") @NotNull @NotBlank String token) {
+    public VerificationTokenResponse verifyEmailVerificationToken(@RequestParam("token") @NotNull @NotBlank String token) {
         return authService.verifyAndUpdateEmailVerificationToken(token);
     }
-
 
     @PostMapping(value = "/logout")
     public ResponseEntity<?> logoutUser(@CookieValue(name = "refresh_token", required = false) String cookieRefresh,

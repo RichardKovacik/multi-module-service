@@ -6,6 +6,7 @@ import sk.mvp.user_service.auth.entity.VerificationToken;
 import sk.mvp.user_service.auth.entity.VerificationTokenType;
 import sk.mvp.user_service.entity.User;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -18,8 +19,7 @@ public class VerificationTokenFactory {
     }
 
     public VerificationToken create(VerificationTokenType tokenType, User user) {
-        Instant expiresAt = Instant.now().plus(verificationTokenConfig.getEmailVerifiationTokenTtl());
+        Instant expiresAt = Instant.now().plus(verificationTokenConfig.getTtlFor(tokenType));
         return new VerificationToken(UUID.randomUUID().toString(), expiresAt, user, tokenType);
-
     }
 }

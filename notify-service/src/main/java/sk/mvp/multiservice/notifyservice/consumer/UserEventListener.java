@@ -37,8 +37,7 @@ public class UserEventListener {
                     event.userId());
 
             // Smart routing used strategy pattern
-            EventType type = EventType.valueOf(event.eventType());
-            INotificationHandler handler = handlerMap.get(type);
+            INotificationHandler handler = handlerMap.get(event.eventType());
 
             if (handler != null) {
                 handler.handleNotification(event);

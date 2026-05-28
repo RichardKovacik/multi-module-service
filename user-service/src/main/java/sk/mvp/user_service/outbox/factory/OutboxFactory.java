@@ -64,7 +64,7 @@ public class OutboxFactory {
             return OutboxEvent.builder()
                     .eventId(event.eventId())
                     .correlationId(event.metadata().correlationId())
-                    .eventType(event.eventType())
+                    .eventType(event.eventType().name())
                     .aggregateId(event.userId())
                     .payload(jsonPayload)
                     .destinationTopic(event.destinationTopic())

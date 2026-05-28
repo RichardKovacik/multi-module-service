@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 import sk.mvp.common.event.BaseEvent;
 import sk.mvp.common.event.EventType;
 import sk.mvp.common.payloads.PasswordResetPayload;
+import sk.mvp.multiservice.notifyservice.email.EmailNotificationType;
+import sk.mvp.multiservice.notifyservice.email.EmailTemplateRegistry;
 import sk.mvp.multiservice.notifyservice.dto.EmailRequest;
 import sk.mvp.multiservice.notifyservice.service.IEmailProvider;
 
@@ -31,16 +33,22 @@ public class PasswordResetNotificationHandler implements INotificationHandler {
     public void handleNotification(BaseEvent<?> event) {
         PasswordResetPayload payload = objectMapper.convertValue(event.payload(), PasswordResetPayload.class);
         log.info("Processing password reset request for user: {}", event.userId());
+
+        // 1. Resolve presentation metadata from the central registry
+        EmailNotificationType emailNotificationType = EmailTemplateRegistry.getEmailNotificationTypeFor(event.eventType())
+                .orElseThrow(() -> new IllegalArgumentException("No email mapping found for event: " + event.eventType()));
+
+        //get subject of email
+        String subject = messageSource.getMessage(emailNotificationType.getSubjectKey(), null, Locale.getDefault());
+
         //prepare request and template data
         Map<String, Object> templateModel = new HashMap<>();
         templateModel.put("resetUrl", payload.link());
 
-        String subject = messageSource.getMessage("email.subject.password-reset-request", null, Locale.getDefault());
-
         EmailRequest emailRequest = new EmailRequest(
                 payload.email(),
                 subject,
-                "password-reset",
+                emailNotificationType.name(),
                 templateModel
         );
 

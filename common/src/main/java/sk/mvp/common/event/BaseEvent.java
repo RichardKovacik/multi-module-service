@@ -11,7 +11,7 @@ import java.util.UUID;
 @Jacksonized
 public record BaseEvent<T>(
         UUID eventId,
-        String eventType,
+        EventType eventType,
         int eventVersion,
         Instant createdAt,
         String userId,

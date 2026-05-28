@@ -1,13 +1,14 @@
 package sk.mvp.multiservice.notifyservice.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.nio.sctp.NotificationHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 import sk.mvp.common.event.BaseEvent;
 import sk.mvp.common.event.EventType;
 import sk.mvp.common.payloads.UserRegisteredPayload;
+import sk.mvp.multiservice.notifyservice.email.EmailNotificationType;
+import sk.mvp.multiservice.notifyservice.email.EmailTemplateRegistry;
 import sk.mvp.multiservice.notifyservice.dto.EmailRequest;
 import sk.mvp.multiservice.notifyservice.service.IEmailProvider;
 
@@ -34,17 +35,21 @@ public class RegistrationNotificationHandler implements INotificationHandler {
     public void handleNotification(BaseEvent<?> event) {
         UserRegisteredPayload payload = objectMapper.convertValue(event.payload(), UserRegisteredPayload.class);
         log.info("Processing registration for user: {}", event.userId());
+        // 1. Resolve presentation metadata from the central registry
+        EmailNotificationType  emailNotificationType = EmailTemplateRegistry.getEmailNotificationTypeFor(event.eventType())
+                .orElseThrow(() -> new IllegalArgumentException("No email mapping found for event: " + event.eventType()));
+        //get subject of email
+        String subject = messageSource.getMessage(emailNotificationType.getSubjectKey(), null, Locale.getDefault());
+
         //prepare request and template model
         Map<String, Object> templateModel = new HashMap<>();
         templateModel.put("verificationUrl", payload.link());
 
-        String subject = messageSource.getMessage("email.subject.registration-verify", null, Locale.getDefault());
-
         EmailRequest emailRequest = new EmailRequest(
-                payload.email(),                           // to
-                subject,       // subject
-                "registration-verification",               // name HTML tempalte
-                templateModel                              // DataModel for template thymeleaf
+                payload.email(),
+                subject,
+                emailNotificationType.getTemplateName(),
+                templateModel
         );
 
         emailProvider.sendEmail(emailRequest);

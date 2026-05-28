@@ -1,4 +1,4 @@
-package sk.mvp.multiservice.notifyservice.config;
+package sk.mvp.multiservice.notifyservice.kafka;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;

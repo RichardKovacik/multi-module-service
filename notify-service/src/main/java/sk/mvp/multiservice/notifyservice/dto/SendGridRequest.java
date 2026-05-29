@@ -17,6 +17,18 @@ public record SendGridRequest(
                 new From(fromEmail, fromName),
                 List.of(new Content("text/html", htmlContent))
         );
+
+    }
+    public static SendGridRequest fromDomain(String toEmail,
+                                             String subject,
+                                             String htmlContent,
+                                             String fromEmail,
+                                             String fromName) {
+        return new SendGridRequest(
+                List.of(new Personalization(List.of(new To(toEmail)), subject)),
+                new From(fromEmail, fromName),
+                List.of(new Content("text/html", htmlContent))
+        );
     }
 
     // Nested definitions

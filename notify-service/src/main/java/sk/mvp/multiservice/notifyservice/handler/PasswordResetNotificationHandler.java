@@ -48,7 +48,7 @@ public class PasswordResetNotificationHandler implements INotificationHandler {
         EmailRequest emailRequest = new EmailRequest(
                 payload.email(),
                 subject,
-                emailNotificationType.name(),
+                emailNotificationType.getTemplateName(),
                 templateModel
         );
 

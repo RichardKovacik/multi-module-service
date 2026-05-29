@@ -39,10 +39,10 @@ The first architectural boundary handles message ingestion, payload extraction, 
 
 ```mermaid
 graph TD
-    %% Styling Configuration
-    classDef broker fill:#E1F5FE,stroke:#0288D1,stroke-width:2px;
-    classDef common fill:#EDE7F6,stroke:#5E35B1,stroke-width:2px;
-    classDef core fill:#E8F5E9,stroke:#2E7D32,stroke-width:2px;
+    %% High-Contrast Styling Configuration
+    classDef broker fill:#B3E5FC,stroke:#01579B,stroke-width:2.5px,color:#000000,font-weight:bold;
+    classDef common fill:#E1BEE7,stroke:#4A148C,stroke-width:2.5px,color:#000000,font-weight:bold;
+    classDef core fill:#C8E6C9,stroke:#1B5E20,stroke-width:2.5px,color:#000000,font-weight:bold;
 
     %% Inbound Path
     Kafka[✉️ Kafka Topic: user-events]:::broker
@@ -84,10 +84,10 @@ Once a handler accepts an event, it shifts responsibility to the rendering and d
 
 ```mermaid
 graph TD
-    %% Styling Configuration
-    classDef handler fill:#E8F5E9,stroke:#2E7D32,stroke-width:2px;
-    classDef infra fill:#FFF3E0,stroke:#E65100,stroke-width:2px;
-    classDef vendor fill:#FFEBEE,stroke:#C62828,stroke-width:2px;
+    %% High-Contrast Styling Configuration
+    classDef handler fill:#C8E6C9,stroke:#1B5E20,stroke-width:2.5px,color:#000000,font-weight:bold;
+    classDef infra fill:#FFE0B2,stroke:#E65100,stroke-width:2.5px,color:#000000,font-weight:bold;
+    classDef vendor fill:#FFCDD2,stroke:#B71C1C,stroke-width:2.5px,color:#000000,font-weight:bold;
 
     %% Strategy Node Entry
     PwdHandler[PasswordResetNotificationHandler]:::handler

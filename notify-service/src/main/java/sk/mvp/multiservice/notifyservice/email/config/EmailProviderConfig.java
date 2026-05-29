@@ -23,7 +23,7 @@ public class EmailProviderConfig {
     public IEmailProvider gmailProvider(JavaMailSender mailSender,
                                         SpringTemplateEngine templateEngine,
                                         @Value("${spring.mail.username}") String fromEmail) {
-        return new GmailSmtpEmailProviderImpl();
+        return new GmailSmtpEmailProviderImpl(templateEngine, "", "");
     }
 
     @Bean
@@ -34,7 +34,10 @@ public class EmailProviderConfig {
                                            @Value("${app.email.sendgrid.from-name}") String fromName,
                                            @Value("${app.email.sendgrid.host}") String host,
                                            @Value("${app.email.sendgrid.uri}") String uri) {
-        return new SendGridEmailProviderImpl(apiKey, host, uri, fromEmail, fromName, templateEngine);
+        log.info("====================================================================");
+        log.info("ACTIVE EMAIL PROVIDER DETECTED: [ SendGrid ] via native RestClient");
+        log.info("====================================================================");
+        return new SendGridEmailProviderImpl(templateEngine, fromEmail, fromName, uri, apiKey, host);
     }
 
     @Bean
@@ -48,6 +51,6 @@ public class EmailProviderConfig {
         log.info("====================================================================");
         log.info("ACTIVE EMAIL PROVIDER DETECTED: [ RESEND ] via native RestClient");
         log.info("====================================================================");
-        return new ResendEmailProviderImpl(apiKey, host, templateEngine, fromEmail, fromName, uri);
+        return new ResendEmailProviderImpl(templateEngine, fromEmail, fromName, uri, apiKey, host);
     }
 }

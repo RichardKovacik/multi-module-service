@@ -1,5 +1,6 @@
 package sk.mvp.user_service.integration.user;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.Cookie;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Assertions;
@@ -23,30 +24,28 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.UUID;
 
+import static org.junit.Assert.assertThrows;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-//@Sql(scripts = "/data-test.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS)
 public class UserProfileIT extends BaseIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
-    private JwtConfig jwtConfig;
-    @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private JwtProvider jwtProvider;
+    @Autowired
+    private EntityManager entityManager;
 
 
     // helper
     private Cookie createAuthCookie(User user) {
-        String accessToken = JwtProvider.generateAccessToken(
-                user.getUsername(),
+        String accessToken = jwtProvider.generateAccessToken(user.getUsername(),
                 user.getTokenVersion(),
                 UUID.randomUUID().toString(),
-                user.getRolesAsStringWithPrefix(),
-                jwtConfig.getAccesKey(),
-                jwtConfig.getAccessTokenExpirationInMls()
-        );
+                user.getRolesAsStringWithPrefix());
         return new Cookie("access_token", accessToken);
     }
 
@@ -68,7 +67,7 @@ public class UserProfileIT extends BaseIntegrationTest {
         Cookie cookie = createAuthCookie(user);
 
         mockMvc.perform(
-                MockMvcRequestBuilders.get("/api/profile/get").cookie(cookie))
+                MockMvcRequestBuilders.get("/api/v1/profile/me").cookie(cookie))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value(user.getUsername()))
@@ -95,7 +94,7 @@ public class UserProfileIT extends BaseIntegrationTest {
         String jsonBody = objectMapper.writeValueAsString(req);
 
         mockMvc.perform(
-                        MockMvcRequestBuilders.patch("/api/profile/update")
+                        MockMvcRequestBuilders.patch("/api/v1/profile/update")
                                 .cookie(cookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(jsonBody))
@@ -121,13 +120,44 @@ public class UserProfileIT extends BaseIntegrationTest {
         String jsonBody = objectMapper.writeValueAsString(req);
 
         mockMvc.perform(
-                        MockMvcRequestBuilders.patch("/api/profile/update")
+                        MockMvcRequestBuilders.patch("/api/v1/profile/update")
                                 .cookie(cookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(jsonBody))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.errorType").value(ErrorType.EMAIL_DUPLICATED.toString()));
+
+    }
+
+
+    @ParameterizedTest
+    @ValueSource(strings = {"jdoe","gtaylor"})
+    @Transactional
+    void shouldFailUpdateProfileWhenOptimisticLockConflictOccurs(String username) throws Exception {
+        //arrange
+        // old session holds old user data version = 0
+        User userFromSessionOne = userRepository.findByUsername(username).get();
+        //wee nned to detach first entity A from hibenrate cache
+        entityManager.detach(userFromSessionOne);
+
+        // another get from DB beaceod of detacvhed
+        // get same entoty but newly fetched from DB version 0
+        User userFromSessionTwo = userRepository.findByUsername(username).orElseThrow();
+
+        //acct & assert
+        //update user and insrqase version ++ to 1
+        userFromSessionTwo.setFirstName("Two newName");
+        userRepository.saveAndFlush(userFromSessionTwo);
+
+        //try update obejct A, it cuold fail beacease version is 0, it excperts 1
+        // Assert: Pokus o uloženie Objektu A musí zlyhať na Optimistic Lock,
+        // pretože v DB je už verzia 1, ale Objekt A posiela verziu 0.
+        userFromSessionOne.setFirstName("One NewName");
+        assertThrows(org.springframework.orm.ObjectOptimisticLockingFailureException.class, () -> {
+            userRepository.saveAndFlush(userFromSessionOne);
+        });
+
 
     }
 

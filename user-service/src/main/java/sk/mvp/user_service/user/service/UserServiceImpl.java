@@ -80,7 +80,7 @@ public class UserServiceImpl implements IUserService {
                 //check if email already exists
                 Optional<User> foundedUser = userRepository.findByEmail(contactDto.email() );
                 if (foundedUser.isPresent()) {
-                    throw new QApplicationException(String.format("Email is already in use", contactDto.email()), ErrorType.EMAIL_DUPLICATED, null);
+                    throw new QApplicationException(String.format("Email is already in use %s", contactDto.email()), ErrorType.EMAIL_DUPLICATED, null);
                 }
                 user.getContact().setEmail(contactDto.email());
             }
@@ -88,8 +88,6 @@ public class UserServiceImpl implements IUserService {
                 user.getContact().setPhoneNumber(contactDto.phoneNumber());
             }
         }
-
-        userRepository.save(user);
 
     }
 

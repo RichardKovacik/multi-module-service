@@ -62,6 +62,10 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Integer version;
+
     public User() {
     }
 
@@ -70,6 +74,14 @@ public class User {
         this.password = password;
         this.contact = contact;
         this.gender = gender;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
     }
 
     public Integer getId() {

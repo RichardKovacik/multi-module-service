@@ -45,7 +45,7 @@ public class UserProfileControllerTest {
     MockMvc mockMvc; // simulates HTTP requests
 
     @Autowired
-    private JwtConfig jwtConfig;
+    private JwtProvider jwtProvider;
 
     @MockBean
     private IUserService userService;
@@ -83,8 +83,8 @@ public class UserProfileControllerTest {
             when(claims.getSubject()).thenReturn(username);
 
             // Tell JwtUtil to return our mock claims when called with the test token and the key from config
-            mockedJwt.when(() -> JwtProvider.parseClaimsFromJwtToken(eq(token), eq(jwtConfig.getAccesKey())))
-                    .thenReturn(claims);
+//            mockedJwt.when(() -> jwtProvider.parseClaimsFromJwtToken(eq(token), eq("")))
+//                    .thenReturn(claims);
 
             // 2. Mock the Service behavior
             when(userService.getUserByUsername(username)).thenReturn(mockProfile);

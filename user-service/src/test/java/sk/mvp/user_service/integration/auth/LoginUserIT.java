@@ -38,7 +38,7 @@ public class LoginUserIT extends BaseIntegrationTest {
     private IRedisService redisService;
 
     @Autowired
-    private JwtConfig jwtConfig;
+    private JwtProvider jwtProvider;
 
 
     private static Stream<Arguments> provideHappyPathLoginCredentials() {
@@ -77,7 +77,7 @@ public class LoginUserIT extends BaseIntegrationTest {
         Cookie refreshTokenCookie = result.getResponse().getCookie("refresh_token");
         //assert
         assert refreshTokenCookie != null;
-        Claims claims = JwtProvider.parseClaimsFromJwtToken(refreshTokenCookie.getValue(), jwtConfig.getRefreshKey());
+        Claims claims = jwtProvider.parseClaimsFromRefreshToken(refreshTokenCookie.getValue());
         boolean isRefreshTokenAddToWhiteList = redisService.has("auth:refresh:token:"+ claims.getId());
 
         assertTrue(isRefreshTokenAddToWhiteList);

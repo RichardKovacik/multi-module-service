@@ -62,6 +62,7 @@ public class QError {
             case AUTH_USER_FAILED -> this.message = "Authentification of user failed";
             case VERIFICATION_TOKEN_INVALID -> this.message = "Verification token is invalid.";
             case VERIFICATION_TOKEN_EXPIRED -> this.message = "Verification token is expired.";
+            case DATA_CONCURRENT_MODIFICATION -> this.message = "The data you are trying to update was modified by another user or session";
         }
     }
 

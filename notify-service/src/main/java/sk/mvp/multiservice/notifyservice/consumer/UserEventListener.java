@@ -28,7 +28,7 @@ public class UserEventListener {
                 .collect(Collectors.toMap(INotificationHandler::getSupportedEventType, h -> h));
     }
 
-    @KafkaListener(topics = "user-event-topic", groupId = "notification-group")
+    @KafkaListener(topics = "user-event-topic", groupId = "notify-service-group")
     public void consumeEvent(BaseEvent<?> event) {
         try {
             log.info("{} Started processing event: {} for user: {}",

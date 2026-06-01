@@ -4,6 +4,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.SignatureException;
+import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +57,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<QErrorResponse> handleOtherRuntime(RuntimeException ex, HttpServletRequest request) {
         log.error(ErrorType.INTERNAL_SERVER_ERROR.toString(), ex);
         return createQErrorResponse(ErrorType.INTERNAL_SERVER_ERROR, ex.getMessage(), request.getRequestURI(), null);
+    }
+
+    @ExceptionHandler(OptimisticLockException.class)
+    public ResponseEntity<QErrorResponse> handleOptimisticLockingFailure(OptimisticLockException ex, HttpServletRequest request) {
+        return createQErrorResponse(ErrorType.DATA_CONCURRENT_MODIFICATION, null, request.getRequestURI(), null);
     }
 
     // Java DTO validation

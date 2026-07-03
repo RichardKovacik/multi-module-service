@@ -13,15 +13,9 @@ import java.util.Map;
 @Slf4j
 public abstract class AbstractEmailProvider implements IEmailProvider {
     private final SpringTemplateEngine templateEngine;
-    @Getter
-    private final String fromEmail;
-    @Getter
-    private final String fromName;
 
-    public AbstractEmailProvider(SpringTemplateEngine templateEngine, String fromEmail, String fromName) {
+    public AbstractEmailProvider(SpringTemplateEngine templateEngine) {
         this.templateEngine = templateEngine;
-        this.fromEmail = fromEmail;
-        this.fromName = fromName;
     }
 
     protected String renderHtmlTemplate(String templateName, Map<String, Object> variables) {
@@ -31,18 +25,10 @@ public abstract class AbstractEmailProvider implements IEmailProvider {
     }
 
     @Override
-    @Async
+    @Async("emailTaskExecutor")
     public void sendEmail(EmailRequest request) {
-        try {
-            String htmlContent = renderHtmlTemplate(request.templateName(), request.templateModel());
-            sendRawEmail(request.to(), request.subject(), htmlContent);
-        } catch (Exception e) {
-            log.error("Failed to send email to [{}] using template [{}] via provider [{}]",
-                    request.to(), request.templateName(), getClass().getSimpleName(), e);
-            throw new EmailDeliveryException("Email sending failed due to: " + e.getMessage(), e);
-        }
-
-
+        String htmlContent = renderHtmlTemplate(request.templateName(), request.templateModel());
+        sendRawEmail(request.to(), request.subject(), htmlContent);
     }
     //Each child implements its own sending strategy
     protected abstract void sendRawEmail(String toEmail, String subject, String htmlContent);

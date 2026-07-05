@@ -4,7 +4,6 @@ import io.github.resilience4j.retry.RetryRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 
@@ -32,7 +31,7 @@ public class ResilienceContextDiagnostic implements CommandLineRunner {
 
         // 2. Identify the exact bean type registered within the application context container
         try {
-            Object clientBean = context.getBean("resendApiClient");
+            Object clientBean = context.getBean("resendApiClientImpl");
             log.info("Diagnostic - Exact Spring Context Class: {}", clientBean.getClass().getName());
             log.info("Diagnostic - Is Bean a Proxy: {}", java.lang.reflect.Proxy.isProxyClass(clientBean.getClass()) || clientBean.getClass().getName().contains("$$SpringCGLIB"));
         } catch (Exception e) {

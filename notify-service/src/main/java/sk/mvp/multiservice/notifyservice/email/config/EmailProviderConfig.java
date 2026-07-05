@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.thymeleaf.spring6.SpringTemplateEngine;
-import sk.mvp.multiservice.notifyservice.apiClients.ResendApiClient;
-import sk.mvp.multiservice.notifyservice.apiClients.SendGridApiClient;
+import sk.mvp.multiservice.notifyservice.apiClients.ResendApiClientImpl;
+import sk.mvp.multiservice.notifyservice.apiClients.SendGridApiClientImpl;
 import sk.mvp.multiservice.notifyservice.service.GmailSmtpEmailProviderImpl;
 import sk.mvp.multiservice.notifyservice.service.IEmailProvider;
 import sk.mvp.multiservice.notifyservice.service.ResendEmailProviderImpl;
@@ -31,22 +31,22 @@ public class EmailProviderConfig {
     @Bean
     @ConditionalOnProperty(name = "app.email.provider", havingValue = "sendgrid")
     public IEmailProvider sendGridProvider(SpringTemplateEngine templateEngine,
-                                           SendGridApiClient sendGridApiClient,
+                                           SendGridApiClientImpl sendGridApiClientImpl,
                                            SendGridEmailClientProperties properties) {
         log.info("====================================================================");
         log.info("ACTIVE EMAIL PROVIDER DETECTED: [ SendGrid ] via native RestClient");
         log.info("====================================================================");
-        return new SendGridEmailProviderImpl(templateEngine, sendGridApiClient, properties);
+        return new SendGridEmailProviderImpl(templateEngine, sendGridApiClientImpl, properties);
     }
 
     @Bean
     @ConditionalOnProperty(name = "app.email.provider", havingValue = "resend")
     public IEmailProvider setResendEmailProvider(SpringTemplateEngine templateEngine,
-                                                 ResendApiClient resendApiClient,
+                                                 ResendApiClientImpl resendApiClientImpl,
                                                  ResendEmailClientProperties properties) {
         log.info("====================================================================");
         log.info("ACTIVE EMAIL PROVIDER DETECTED: [ RESEND ] via native RestClient");
         log.info("====================================================================");
-        return new ResendEmailProviderImpl(templateEngine,resendApiClient, properties);
+        return new ResendEmailProviderImpl(templateEngine, resendApiClientImpl, properties);
     }
 }

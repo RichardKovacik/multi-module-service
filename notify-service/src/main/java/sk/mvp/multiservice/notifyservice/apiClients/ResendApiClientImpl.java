@@ -6,23 +6,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import sk.mvp.multiservice.notifyservice.apiClients.exception.ClientException;
 import sk.mvp.multiservice.notifyservice.apiClients.exception.TransientException;
+import sk.mvp.multiservice.notifyservice.dto.EmailApiRequest;
 import sk.mvp.multiservice.notifyservice.dto.ResendEmailApiRequest;
 import sk.mvp.multiservice.notifyservice.email.config.ResendEmailClientProperties;
-import sk.mvp.multiservice.notifyservice.email.exception.EmailDeliveryException;
 
 import java.net.http.HttpClient;
 
 @Slf4j
 @Component
-public class ResendApiClient {
+public class ResendApiClientImpl implements EmailApiClient{
     private RestClient restClient;
     private ResendEmailClientProperties properties;
 
-    public ResendApiClient(ResendEmailClientProperties properties) {
+    public ResendApiClientImpl(ResendEmailClientProperties properties) {
         this.properties = properties;
         HttpClient javaHttpClient = HttpClient.newBuilder()
                 .connectTimeout(properties.getConnectionTimeout())
@@ -46,10 +45,13 @@ public class ResendApiClient {
      */
     @CircuitBreaker(name = "resendEmailCircuitBreaker",fallbackMethod = "fallbackEmail")
     @Retry(name = "resendEmailRetry")
-    public void initiatePostRequest(ResendEmailApiRequest request) {
+    @Override
+    public void executeEmailRequest(EmailApiRequest request) {
+        log.info("Calling external API service Resend: {}{}", properties.getHost(), properties.getUri());
+        ResendEmailApiRequest resendEmailApiRequest = resendEmailApiRequestPrepare(request);
            restClient.post()
                     .uri(properties.getUri())
-                    .body(request)
+                    .body(resendEmailApiRequest)
                     .retrieve()
                     .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
                         // Handle rate limiting as a transient exception
@@ -64,12 +66,22 @@ public class ResendApiClient {
                     })
                     .toBodilessEntity();
 
-        log.info("[EMAIL SUCCESS] Request accepted by Resend API. Target: {}", request.to()[0]);
+        log.info("[EMAIL SUCCESS] Request accepted by Resend API. Target: {}", request.to());
     }
 
 
-    public void fallbackEmail(ResendEmailApiRequest request, Throwable exception) {
+    public void fallbackEmail(EmailApiRequest request, Throwable exception) {
        log.error("Email failed to send. Reason: {}", exception.getMessage(), exception);
         // Return fallback execution token or log context state to alternate handle
     }
+
+
+    @Override
+    public boolean ping() {
+        return true;
+    }
+    private ResendEmailApiRequest resendEmailApiRequestPrepare(EmailApiRequest request) {
+        return new ResendEmailApiRequest(properties.getFromEmail(), new String[]{request.to()}, request.subject(), request.htmlContent());
+    }
+
 }

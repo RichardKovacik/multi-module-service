@@ -14,12 +14,15 @@ import sk.mvp.multiservice.notifyservice.dto.ResendEmailApiRequest;
 import sk.mvp.multiservice.notifyservice.email.config.ResendEmailClientProperties;
 
 import java.net.http.HttpClient;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @Component
 public class ResendApiClientImpl implements EmailApiClient{
     private RestClient restClient;
     private ResendEmailClientProperties properties;
+    private final AtomicReference<String> lastErrorMessage = new AtomicReference<>("None");
 
     public ResendApiClientImpl(ResendEmailClientProperties properties) {
         this.properties = properties;
@@ -78,8 +81,20 @@ public class ResendApiClientImpl implements EmailApiClient{
 
     @Override
     public boolean ping() {
-        return true;
+        try {
+            restClient.get()
+                    .uri("/")
+                    .retrieve()
+                    .toBodilessEntity();
+            lastErrorMessage.set("None");
+            return true;
+        } catch (Exception e) {
+            lastErrorMessage.set("Ping failure: " + e.getMessage());
+            return false;
+        }
     }
+
+    public String getLastFault() { return lastErrorMessage.get(); }
     private ResendEmailApiRequest resendEmailApiRequestPrepare(EmailApiRequest request) {
         return new ResendEmailApiRequest(properties.getFromEmail(), new String[]{request.to()}, request.subject(), request.htmlContent());
     }

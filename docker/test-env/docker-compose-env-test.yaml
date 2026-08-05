@@ -1,0 +1,136 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mms-postgres-t
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_t_data:/var/lib/postgresql/data
+    networks:
+      - mms-t-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: mms-redis-t
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_t_data:/data
+    networks:
+      - mms-t-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: mms-kafka-t # Opravené z kafka-kraft-t, aby sedelo s .env
+    ports:
+      - "${KAFKA_PORT}:9093"
+    environment:
+      KAFKA_NODE_ID: ${KAFKA_NODE_ID}
+      KAFKA_PROCESS_ROLES: ${KAFKA_PROCESS_ROLES}
+      KAFKA_CONTROLLER_QUORUM_VOTERS: ${KAFKA_CONTROLLER_QUORUM_VOTERS}
+      KAFKA_LISTENERS: ${KAFKA_LISTENERS}
+      KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS}
+      KAFKA_INTER_BROKER_LISTENER_NAME: ${KAFKA_INTER_BROKER_LISTENER_NAME}
+      KAFKA_CONTROLLER_LISTENER_NAMES: ${KAFKA_CONTROLLER_LISTENER_NAMES}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: ${KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR}
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: ${KAFKA_TRANSACTION_STATE_LOG_MIN_ISR}
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: ${KAFKA_AUTO_CREATE_TOPICS_ENABLE}
+    volumes:
+      - kafka_t_data:/var/lib/kafka/data
+    networks:
+      - mms-t-network
+    healthcheck:
+      test: [ "CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9093 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: mms-kafka-ui-t
+    ports:
+      - "${KAFKA_UI_PORT}:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: ${KAFKA_UI_CLUSTER_NAME}
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: ${KAFKA_UI_BOOTSTRAP_SERVERS}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - mms-t-network
+
+  # --- MOJE SLUŽBY ---
+
+  user-service:
+    container_name: mms-user-service-t
+    build:
+      context: ../../
+      dockerfile: ./user-service/Dockerfile
+    ports:
+      - "${USER_SERVICE_PORT}:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE}
+      DB_HOST: mms-postgres-t # Opravené na mms-postgres-t, aby sedelo s container_name
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: mms-redis-t
+      REDIS_PORT: 6379
+      KAFKA_SERVERS: mms-kafka-t:29092
+      SERVER_PORT: 8081
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mms-t-network
+
+  notify-service:
+    container_name: mms-notify-service-t
+    build:
+      context: ../../
+      dockerfile: ./notify-service/Dockerfile
+    ports:
+      - "${NOTIFY_SERVICE_PORT}:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: mms-kafka-t:29092
+      SERVER_PORT: 8085
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_HOST: ${RESEND_HOST}
+      RESEND_URI: ${RESEND_URI}
+    depends_on:
+      kafka:
+        condition: service_healthy # Opravené na prísny start po uzdravení Kafky
+    networks:
+      - mms-t-network
+
+volumes:
+  postgres_t_data:
+  redis_t_data:
+  kafka_t_data:
+
+networks:
+  mms-t-network:
+    name: mms-t-main-network
+    driver: bridge

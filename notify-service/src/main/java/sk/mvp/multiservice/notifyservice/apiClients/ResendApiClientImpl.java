@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestClient;
 import sk.mvp.multiservice.notifyservice.apiClients.exception.ClientException;
 import sk.mvp.multiservice.notifyservice.apiClients.exception.TransientException;
@@ -14,6 +15,7 @@ import sk.mvp.multiservice.notifyservice.dto.ResendEmailApiRequest;
 import sk.mvp.multiservice.notifyservice.email.config.ResendEmailClientProperties;
 
 import java.net.http.HttpClient;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -26,6 +28,7 @@ public class ResendApiClientImpl implements EmailApiClient{
 
     public ResendApiClientImpl(ResendEmailClientProperties properties) {
         this.properties = properties;
+        System.out.println(properties.getApiKey());
         HttpClient javaHttpClient = HttpClient.newBuilder()
                 .connectTimeout(properties.getConnectionTimeout())
                 .build();
@@ -57,12 +60,13 @@ public class ResendApiClientImpl implements EmailApiClient{
                     .body(resendEmailApiRequest)
                     .retrieve()
                     .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
+                        String responseBody = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
                         // Handle rate limiting as a transient exception
                         if (res.getStatusCode().value() == 429) {
                             throw new TransientException("Resend API rate limit triggered (429). Retrying...");
                         }
                         // Handle formatting or auth issues as client exceptions (bypasses retries)
-                        throw new ClientException("Fatal validation or key credential error: " + res.getStatusCode());
+                        throw new ClientException("Fatal validation or key credential error details: " + responseBody);
                     })
                     .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
                         throw new TransientException("Resend system service degradation (5xx). Retrying...");
@@ -74,7 +78,7 @@ public class ResendApiClientImpl implements EmailApiClient{
 
 
     public void fallbackEmail(EmailApiRequest request, Throwable exception) {
-       log.error("Email failed to send. Reason: {}", exception.getMessage(), exception);
+       log.error("Email failed to send. Reason: {}", exception.getMessage());
         // Return fallback execution token or log context state to alternate handle
     }
 

@@ -1,0 +1,69 @@
+spring:
+  config:
+    # 1. Hľadá .env o úroveň vyššie (v koreni projektu)
+    import: "file: ../../.env[.properties]"
+  # --- KAFKA CONSUMER CONFIG ---
+  kafka:
+    bootstrap-servers: localhost:9092
+    properties:
+      enable.metrics.push: "false"
+  # --- DIRECT GMAIL CONFIG ---
+  mail:
+    host: "://gmail.com"
+    port: 587
+    username: tvoj.dev.email@gmail.com
+    password: heslo
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+# --- SERVER CONFIG ---
+server:
+  port: 8085
+
+# --- MANAGEMENT, ACTUATOR & HEALTH ---
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,retryevents,circuitbreakerevents
+  endpoint:
+    health:
+      show-details: always
+  health:
+    mail:
+      enabled: false
+
+# --- LOGGING CONFIG ---
+logging:
+  level:
+    org.apache.kafka: INFO
+
+# --- CUSTOM APPLICATION PROPERTIES (Biznis nastavenia, E-maily) ---
+app:
+  events:
+    version: 1
+  # Change to gmail or another email provider
+  email:
+    provider: resend
+    # sendgrid provider
+    sendgrid:
+      api-key: "ss"
+      from-email: richardkovacik.123@gmail.com
+      from-name: Coffessino
+      host: https://api.sendgrid.com
+      uri: /v3/mail/send
+      connection-timeout: PT3S
+      read-timeout: PT5S
+    # resend.com provider
+    resend:
+      api-key: ${RESEND_API_KEY}
+      from-email: onboarding@resend.dev
+      from-name: Coffesino DEV Team
+      host: https://api.resend.com
+      uri: /emails
+      connection-timeout: PT3S
+      read-timeout: PT5S

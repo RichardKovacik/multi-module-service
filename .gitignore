@@ -18,7 +18,9 @@ target/
 *.iws
 *.iml
 *.ipr
-*.properties
+
+# Ignoruje presný súbor .env v úplne akomkoľvek priečinku projektu
+**/.env
 
 ### NetBeans ###
 /nbproject/private/
@@ -32,5 +34,4 @@ build/
 
 ### VS Code ###
 .vscode/
-Dockerfile
 *.p12

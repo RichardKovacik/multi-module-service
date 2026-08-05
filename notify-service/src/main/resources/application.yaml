@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: notify-service
+  # --- LOCALIZATION & MESSAGES ---
+  messages:
+    basename: messages
+    encoding: UTF-8
+
+  # --- KAFKA CONSUMER CONFIG ---
+  kafka:
+    consumer:
+      group-id: notify-service-group
+      auto-offset-reset: latest
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+# --- RESILIENCE4J (RETRY & CIRCUIT BREAKER) ---
+resilience4j:
+  # Aspect Ordering (Force Retry to execute outside of Circuit Breaker layer)
+  retry:
+    retry-aspect-order: 2
+    instances:
+      resendEmailRetry:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2.0
+        # Retry only on network timeouts and transient errors
+        retryExceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - sk.mvp.multiservice.notifyservice.apiClients.exception.TransientException
+        # Skip retries entirely if the client payload or credentials are bad
+        ignoreExceptions:
+          - sk.mvp.multiservice.notifyservice.apiClients.exception.ClientException
+
+  circuitbreaker:
+    circuit-breaker-aspect-order: 1
+    configs:
+      default:
+        registerHealthIndicator: true
+    instances:
+      resendEmailCircuitBreaker:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 15s
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        # Do not let client data validation bugs trip the network breaker for healthy traffic
+        ignoreExceptions:
+          - sk.mvp.multiservice.notifyservice.apiClients.exception.ClientException

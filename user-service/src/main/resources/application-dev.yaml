@@ -1,0 +1,85 @@
+spring:
+  # --- DATASOURCE CONFIG ---
+  datasource:
+    url: jdbc:postgresql://localhost:5432/user_db
+    username: admin
+    password: admin
+
+  # --- HIBERNATE & JPA CONFIG ---
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # --- FLYWAY MIGRATION ---
+  # Define both locations (Base Schema + Dev Data)
+  flyway:
+    enabled: true
+    locations: classpath:db/migration,classpath:db/dev-data,classpath:db/dev
+
+  # --- REDIS CONFIG ---
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  # --- KAFKA CONFIG ---
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      # Reliability: All replicas must acknowledge the message
+      acks: all
+      properties:
+        enable.idempotence: true
+        # spring.json.trusted.packages: sk.mvp.common.event
+        spring.json.add.type.headers: false
+        # Master timeout: if 15s pass without an ACK, the callback triggers an exception
+        delivery.timeout.ms: 15000
+        # Max time for a single network request to the broker
+        request.timeout.ms: 10000
+        # Batching: Wait 5ms to collect more messages before sending to increase throughput
+        linger.ms: 5
+        # Optional but recommended: Wait 1s between retry attempts to avoid spamming a failing broker
+        retry.backoff.ms: 1000
+        # Ensure the producer doesn't block the calling thread if the internal buffer is full (Crucial for app stability)
+        max.block.ms: 5000
+
+# --- SERVER CONFIG (SPRING SECURITY, SESSION & HTTPS) ---
+server:
+  port: 8081
+  servlet:
+    session:
+      timeout: 30m
+  ssl:
+    enabled: false
+    key-store: classpath:spring-local.p12
+    key-store-type: PKCS12
+    key-store-password: changeit
+    key-alias: spring-local
+
+
+# --- MANAGEMENT & ACTUATOR ---
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+      # zmena URL prefixu (default je /actuator)
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+
+# --- LOGGING CONFIG ---
+logging:
+  level:
+    root: DEBUG
+    org.hibernate.SQL: DEBUG
+    # org.springframework.security: TRACE
+    # com.zaxxer.hikari: DEBUG # hikar logy

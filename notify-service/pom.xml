@@ -121,18 +121,10 @@
                     <parameters>true</parameters> <!-- Toto povolí čítanie názvov polí v Recordoch -->
                 </configuration>
             </plugin>
-
             <plugin>
-                <!-- Netreba verziu, tá sa dedí z <pluginManagement> parenta -->
+                <!-- Aktivuje repackage z parenta a vloží embedded Tomcat -->
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>repackage</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

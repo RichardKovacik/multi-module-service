@@ -1,0 +1,97 @@
+spring:
+  application:
+    name: user-service
+  main:
+    allow-circular-references: true
+  # --- KAFKA CONFIG ---
+  kafka:
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      # Reliability: All replicas must acknowledge the message
+      acks: all
+      properties:
+        enable.idempotence: true
+        # spring.json.trusted.packages: sk.mvp.common.event
+        spring.json.add.type.headers: false
+        # Master timeout: if 15s pass without an ACK, the callback triggers an exception
+        delivery.timeout.ms: 15000
+        # Max time for a single network request to the broker
+        request.timeout.ms: 10000
+        # Batching: Wait 5ms to collect more messages before sending to increase throughput
+        linger.ms: 5
+        # Optional but recommended: Wait 1s between retry attempts to avoid spamming a failing broker
+        retry.backoff.ms: 1000
+        # Ensure the producer doesn't block the calling thread if the internal buffer is full (Crucial for app stability)
+        max.block.ms: 5000
+# --- JWT CONFIG ---
+jwt:
+  # access token
+  access-token:
+    secret: 9f3c8e2a7b1d4a6c5e9f0b2d8a1e7c6f4b5a9d3e2c1f8a7b6e5d4c3
+    expiration: PT15M
+    header: Authorization
+    prefix: "Bearer "
+    cookie-name: access_token
+  # refresh token env
+  refresh-token:
+    secret: 9f3c8e2a7b1d4a6c5e9f0b2d8a1e7c6f4b5a9d3e2c1f8a7b6e5d444
+    expiration: P7D
+    cookie-name: refresh_token
+    cookie:
+      path: api/auth
+  # access and refresh token shared attributes
+  cookie:
+    domain: localhost
+    isSecure: true
+    isHttpOnly: true
+    sameSite: Strict
+
+# --- CUSTOM APPLICATION PROPERTIES (Biznis domény, URI a bezpečnosť) ---
+app:
+  events:
+    version: 1
+  backend:
+    protocol: http
+    domain: localhost
+    port: ${SERVER_PORT}
+    uri:
+      email-verification: /api/v1/auth/email/confirm
+      password-reset: /api/v1/auth/password/reset/validate-token
+  # verification tokens configs
+  auth:
+    verification-token:
+      ttl:
+        email-verification: P2D
+        password-reset: PT15M
+  # security max attempts
+  security:
+    brute-force:
+      window: PT15M
+      lockout-duration: PT1M
+      max-attempts: 3
+
+# --- CUSTOM KAFKA TOPICS ---
+kafka:
+  user:
+    event:
+      topic: user-event-topic
+
+# --- SWAGGER OPENAPI ---
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+
+# --- MANAGEMENT & ACTUATOR ---
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+      # zmena URL prefixu (default je /actuator)
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always

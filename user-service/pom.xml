@@ -26,6 +26,16 @@
 		<tag/>
 		<url/>
 	</scm>
+
+	<build>
+		<plugins>
+			<plugin>
+				<!-- Aktivuje repackage z parenta a vloží embedded Tomcat -->
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
 	<dependencies>
 		<!-- CORE -->
 		<dependency>

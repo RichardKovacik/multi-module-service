@@ -91,48 +91,96 @@ An isolated service that reacts to system events.
 
 ---
 
-## 🚀 3. Quick Start
+## 🚀 Quick Start (Local Development)
 
-### Prerequisites
+Follow these steps to get the project up and running on your local machine.
+
+### 📋 Prerequisites
+To minimize setup friction, you only need to have the following installed:
+*   **JDK 21** (or higher)
 *   **Docker & Docker Compose**
-*   **JDK 21**
-*   **Maven 3.9+**
+*   **IntelliJ IDEA** (Recommended IDE)
+*   *Note: You do **NOT** need to install Maven globally. The project uses the bundled Maven Wrapper.*
 
-### Step 1: Clone the repository
+---
+
+### Step 1: Clone the Repository
+Open your terminal or command prompt and run:
 ```bash
 git clone https://github.com
-cd user-service
-```
-
-### Step 2: Launch Infrastructure
-Start PostgreSQL, Redis, and Kafka using the provided docker-compose file:
-```bash
-docker-compose up -d
-```
-
-### Step 3: Build and Run
-```bash
-# Build all modules
-mvn clean install
-
-# Start User Service (Port 8081)
-mvn spring-boot:run -pl user-service
-
-# Start Notify Service
-mvn spring-boot:run -pl notify-service
+cd your-repo-name
 ```
 
 ---
 
-## ⚙️ 4. Environment Variables
+### Step 2: Launch Development Infrastructure (Docker)
+Before running the Java applications, you must start the core infrastructure (PostgreSQL, Redis, Kafka, etc.). 
 
+Navigate to the directory where your Docker files are located and start the containers using the specific dev file:
+```bash
+docker compose -f docker-compose-infra-dev.yaml up -d
+```
+*(To stop the infrastructure containers later, run `docker compose -f docker-compose-infra-dev.yaml down`)*
 
-| Variable | Description | Default Value |
-| :--- | :--- | :--- |
-| `SERVER_PORT` | Port for the service | `8081` |
-| `SPRING_DATASOURCE_URL` | PostgreSQL URL | `jdbc:postgresql://localhost:5432/user_db` |
-| `SPRING_DATA_REDIS_HOST` | Redis Host | `localhost` |
-| `SPRING_KAFKA_BOOTSTRAP_SERVERS` | Kafka Broker | `localhost:9092` |
+---
+
+### Step 3: Build the Project
+Once the infrastructure is running, you need to compile the parent project and link all internal module dependencies together. Run this command from the project **root** directory:
+
+```bash
+# On Windows (PowerShell):
+.\mvnw clean install -DskipTests
+
+# On Mac / Linux:
+./mvnw clean install -DskipTests
+```
+
+---
+
+### Step 4: Run the Application Services
+
+Now you can start your microservices. Choose either **Option A** (via the IDE UI) or **Option B** (via Terminal).
+
+#### Option A: Running via IntelliJ IDEA (Recommended & Easiest)
+1. Open IntelliJ IDEA, click **Open**, and select the root `pom.xml` to import the project.
+2. Ensure the project is using **JDK 21** (*File -> Project Structure -> Project*). IntelliJ will automatically detect and use the bundled Maven Wrapper.
+3. Wait for the IDE to finish indexing and downloading dependencies.
+4. Locate the main application class for the service you want to start (e.g., `UserServiceApplication.java` inside `user-service`).
+5. Click the green **Run** (Play) button next to the `main` method.
+6. *To apply the `dev` profile:* Go to *Run -> Edit Configurations*, select your application, and add `-Dspring-boot.run.profiles=dev` into the **VM options**.
+
+#### Option B: Running via Terminal (Using Maven Wrapper)
+If you prefer the command line, run the following commands from the project **root** directory (quotes are required to prevent Windows PowerShell syntax errors):
+
+```bash
+# Start User Service (Port 8081)
+.\mvnw spring-boot:run -pl user-service "-Dspring-boot.run.profiles=dev"
+
+# Start Notify Service
+.\mvnw spring-boot:run -pl notify-service "-Dspring-boot.run.profiles=dev"
+```
+*(If you are on Mac or Linux, simply replace `.\mvnw` with `./mvnw`)*
+
+## ⚙️ 4. Environment Variables & Local Configuration
+
+For local development, the application requires the **`dev`** profile to be active. Custom environment variables (such as third-party API keys, webhook secrets, or external API URLs) are managed via a local `.env` file located in the project root directory.
+
+Thanks to Spring Boot's native configuration import feature, **no IDE plugins or terminal hacks are required** to load these variables. Spring is pre-configured to automatically import them at startup:
+
+```yaml
+spring:
+  config:
+    import: "file:../../.env[.properties]"
+```
+
+### Step 1: Create your local `.env` file
+The repository contains a template with placeholder values. You need to copy it to enable your local overrides:
+
+1. Locate the **`.env.example.dev`** file in the project **root** directory.
+2. Duplicate it in the same directory and rename the copy to exactly **`.env`**.
+3. Open the newly created **`.env`** file and fill in your actual private data (e.g., your custom API keys, external service URLs, or local secrets).
+
+> ⚠️ **Important:** The `.env` file contains sensitive information and is automatically excluded by Git. Never commit your real `.env` file to the repository.
 
 ---
 

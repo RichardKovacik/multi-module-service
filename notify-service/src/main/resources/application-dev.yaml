@@ -1,6 +1,6 @@
 spring:
   config:
-    # 1. Hľadá .env o úroveň vyššie (v koreni projektu)
+    # 1. search for env properties
     import: "file: ../../.env[.properties]"
   # --- KAFKA CONSUMER CONFIG ---
   kafka:

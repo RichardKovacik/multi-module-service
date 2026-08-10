@@ -1,9 +1,10 @@
-package sk.mvp.user_service.entity;
+package sk.mvp.user_service.user.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import sk.mvp.user_service.user.utils.GenderConverter;
 
 import java.util.Set;
 
@@ -35,8 +36,7 @@ public class User {
     @OneToOne(mappedBy = "user",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
-            optional = false,
-            fetch = FetchType.LAZY)
+            optional = false)
     private Contact contact;
 
     // constraint F alebo M

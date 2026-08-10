@@ -1,6 +1,6 @@
 package sk.mvp.user_service.user.service;
 
-import sk.mvp.user_service.entity.User;
+import sk.mvp.user_service.user.entity.User;
 import sk.mvp.user_service.user.dto.UserProfile;
 
 public interface IUserService {

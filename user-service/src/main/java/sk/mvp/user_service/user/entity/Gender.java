@@ -1,4 +1,4 @@
-package sk.mvp.user_service.entity;
+package sk.mvp.user_service.user.entity;
 
 public enum Gender {
     MALE('M'),

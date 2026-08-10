@@ -3,7 +3,7 @@ package sk.mvp.user_service.auth.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import sk.mvp.user_service.entity.User;
+import sk.mvp.user_service.user.entity.User;
 
 import java.time.Instant;
 

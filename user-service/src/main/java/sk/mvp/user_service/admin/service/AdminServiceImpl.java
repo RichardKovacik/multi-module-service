@@ -1,18 +1,19 @@
 package sk.mvp.user_service.admin.service;
 
-import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import sk.mvp.user_service.admin.dto.UserStatus;
-import sk.mvp.user_service.admin.dto.UserStatusUpdateReq;
+import org.springframework.transaction.annotation.Transactional;
+import sk.mvp.user_service.admin.dto.response.AdminUserListItemResp;
+import sk.mvp.user_service.user.entity.UserStatus;
+import sk.mvp.user_service.admin.dto.request.UserStatusUpdateReq;
 import sk.mvp.user_service.admin.dto.UserSummary;
 import sk.mvp.user_service.auth.service.ITokenService;
 import sk.mvp.user_service.common.exception.QApplicationException;
 import sk.mvp.user_service.common.exception.data.ErrorType;
-import sk.mvp.user_service.entity.Gender;
-import sk.mvp.user_service.entity.Role;
-import sk.mvp.user_service.entity.User;
+import sk.mvp.user_service.user.entity.Gender;
+import sk.mvp.user_service.user.entity.Role;
+import sk.mvp.user_service.user.entity.User;
 import sk.mvp.user_service.projections.UserSummaryProjection;
 import sk.mvp.user_service.user.repository.RoleRepository;
 import sk.mvp.user_service.user.repository.UserRepository;
@@ -104,15 +105,16 @@ public class AdminServiceImpl implements IAdminService {
     }
 
     @Override
-    public List<UserSummary> getUsers(int page, int rows) {
-        Page<UserSummaryProjection> users = userRepository.findAllProjectedBy(PageRequest.of(page, rows));
-        if (users.isEmpty()){
+    @Transactional(readOnly = true)
+    public List<AdminUserListItemResp> getUsers(int pageNumber, int pageSize) {
+        Page<User> users = userRepository.findAll(PageRequest.of(pageNumber, pageSize));
+        if (users.isEmpty()) {
             return List.of();
         }
         return users.getContent()
                 .stream()
-                .map(UserSummary::new)
-                .collect(Collectors.toList());
+                .map(AdminUserListItemResp::fromEntity)
+                .toList();
     }
 
     @Override

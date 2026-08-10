@@ -1,4 +1,4 @@
-package sk.mvp.user_service.admin.dto;
+package sk.mvp.user_service.user.entity;
 
 public enum UserStatus {
     ENABLED,

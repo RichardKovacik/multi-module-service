@@ -3,8 +3,9 @@ package sk.mvp.user_service.admin.controller;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import sk.mvp.user_service.admin.dto.UserStatusUpdateReq;
+import sk.mvp.user_service.admin.dto.request.UserStatusUpdateReq;
 import sk.mvp.user_service.admin.dto.UserSummary;
+import sk.mvp.user_service.admin.dto.response.AdminUserListItemResp;
 import sk.mvp.user_service.admin.service.IAdminService;
 
 import java.util.List;
@@ -49,8 +50,8 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
     @GetMapping(value = "/users")
-    public List<UserSummary> getUsers(@RequestParam(defaultValue = "0", name = "page") int page,
-                                      @RequestParam(defaultValue = "5", name = "size") int size) {
+    public List<AdminUserListItemResp> getUsers(@RequestParam(defaultValue = "0", name = "page") int page,
+                                                @RequestParam(defaultValue = "5", name = "size") int size) {
         return adminService.getUsers(page, size);
     }
 

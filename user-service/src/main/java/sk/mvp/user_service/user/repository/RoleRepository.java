@@ -1,7 +1,7 @@
 package sk.mvp.user_service.user.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import sk.mvp.user_service.entity.Role;
+import sk.mvp.user_service.user.entity.Role;
 
 import java.util.Optional;
 

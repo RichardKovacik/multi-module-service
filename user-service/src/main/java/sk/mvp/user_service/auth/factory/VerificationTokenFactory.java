@@ -4,9 +4,8 @@ import org.springframework.stereotype.Component;
 import sk.mvp.user_service.auth.config.VerificationTokenConfig;
 import sk.mvp.user_service.auth.entity.VerificationToken;
 import sk.mvp.user_service.auth.entity.VerificationTokenType;
-import sk.mvp.user_service.entity.User;
+import sk.mvp.user_service.user.entity.User;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 

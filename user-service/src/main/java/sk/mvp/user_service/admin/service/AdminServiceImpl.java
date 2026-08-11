@@ -2,6 +2,7 @@ package sk.mvp.user_service.admin.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sk.mvp.user_service.admin.dto.response.AdminUserListItemResp;
@@ -106,15 +107,12 @@ public class AdminServiceImpl implements IAdminService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AdminUserListItemResp> getUsers(int pageNumber, int pageSize) {
-        Page<User> users = userRepository.findAll(PageRequest.of(pageNumber, pageSize));
+    public Page<AdminUserListItemResp> getUsers(Pageable pageable) {
+        Page<User> users = userRepository.findAll(pageable);
         if (users.isEmpty()) {
-            return List.of();
+            return Page.empty();
         }
-        return users.getContent()
-                .stream()
-                .map(AdminUserListItemResp::fromEntity)
-                .toList();
+       return users.map(user -> AdminUserListItemResp.fromEntity(user));
     }
 
     @Override

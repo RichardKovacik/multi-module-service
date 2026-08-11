@@ -1,6 +1,9 @@
 package sk.mvp.user_service.admin.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sk.mvp.user_service.admin.dto.request.UserStatusUpdateReq;
@@ -50,9 +53,8 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
     @GetMapping(value = "/users")
-    public List<AdminUserListItemResp> getUsers(@RequestParam(defaultValue = "0", name = "page") int page,
-                                                @RequestParam(defaultValue = "5", name = "size") int size) {
-        return adminService.getUsers(page, size);
+    public Page<AdminUserListItemResp> getUsers(@PageableDefault(page = 0, size = 10, sort = "id") Pageable pageable) {
+        return adminService.getUsers(pageable);
     }
 
     @GetMapping(value = "/users/filter/by-gender")

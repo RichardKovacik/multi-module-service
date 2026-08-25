@@ -3,6 +3,19 @@ spring:
     name: user-service
   main:
     allow-circular-references: true
+  profiles:
+    group:
+      dev:
+      test:
+        - spring-security
+  data:
+    web:
+      pageable:
+        default-page-size: 10
+        max-page-size: 100
+        one-indexed-parameters: false
+        page-parameter: page
+        size-parameter: size
   # --- KAFKA CONFIG ---
   kafka:
     producer:
@@ -66,6 +79,7 @@ app:
         password-reset: PT15M
   # security max attempts
   security:
+    enabled: true
     brute-force:
       window: PT15M
       lockout-duration: PT1M

@@ -5,6 +5,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import sk.mvp.user_service.common.exception.AccountLockedExp;
+import sk.mvp.user_service.user.entity.User;
 import sk.mvp.user_service.user.repository.UserRepository;
 
 @Service
@@ -18,7 +19,7 @@ public class QUserDetailsService implements UserDetailsService {
     @Override
     @Transactional
     public QUserDetail loadUserByUsername(String username) throws UsernameNotFoundException, AccountLockedExp {
-        sk.mvp.user_service.entity.User user = userRepository.findByUsername(username).orElseThrow(() ->
+        User user = userRepository.findByUsername(username).orElseThrow(() ->
                 new UsernameNotFoundException("Username not found"));
         return new QUserDetail(user);
     }

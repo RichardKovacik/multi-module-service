@@ -4,8 +4,8 @@ import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import sk.mvp.user_service.entity.Role;
-import sk.mvp.user_service.entity.User;
+import sk.mvp.user_service.user.entity.Role;
+import sk.mvp.user_service.user.entity.User;
 
 import java.util.Collection;
 import java.util.List;

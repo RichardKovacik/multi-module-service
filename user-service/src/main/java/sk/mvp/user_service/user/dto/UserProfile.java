@@ -1,7 +1,7 @@
 package sk.mvp.user_service.user.dto;
 
 import jakarta.validation.constraints.Size;
-import sk.mvp.user_service.entity.User;
+import sk.mvp.user_service.user.entity.User;
 
 import java.io.Serializable;
 

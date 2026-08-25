@@ -1,8 +1,10 @@
-package sk.mvp.user_service.infra.security;
+package sk.mvp.user_service.infra.security.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -16,6 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import sk.mvp.user_service.auth.jwt.JwtAuthFilter;
+import sk.mvp.user_service.infra.security.QPostAuthenticationChecker;
+import sk.mvp.user_service.infra.security.QUserDetailsService;
 
 @Configuration
 @EnableWebSecurity
@@ -36,7 +40,17 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @ConditionalOnProperty(name = "app.security.enabled", havingValue = "false")
+    public SecurityFilterChain disabledSecurity(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+        return http.build();
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "app.security.enabled", havingValue = "true")
+    public SecurityFilterChain enabledSecurity(HttpSecurity http) throws Exception {
         http
                 // csfr simple config
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF
@@ -55,7 +69,6 @@ public class SecurityConfig {
                 );
         // Add the JWT Token filter before the UsernamePasswordAuthenticationFilter
                 http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-//                http.addFilterAt(qUsernamePasswordAuthFilter, UsernamePasswordAuthenticationFilter.class);
         if (sslEnabled) {
             http.requiresChannel(channel -> channel.anyRequest().requiresSecure());
         }

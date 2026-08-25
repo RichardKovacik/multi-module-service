@@ -21,9 +21,9 @@ import sk.mvp.user_service.auth.service.impl.AuthServiceImpl;
 import sk.mvp.user_service.common.exception.QApplicationException;
 import sk.mvp.user_service.common.exception.data.ErrorType;
 import sk.mvp.user_service.infra.reddis.IRedisService;
-import sk.mvp.user_service.entity.Contact;
-import sk.mvp.user_service.entity.Gender;
-import sk.mvp.user_service.entity.User;
+import sk.mvp.user_service.user.entity.Contact;
+import sk.mvp.user_service.user.entity.Gender;
+import sk.mvp.user_service.user.entity.User;
 import sk.mvp.user_service.auth.entity.VerificationToken;
 import sk.mvp.user_service.user.repository.UserRepository;
 

@@ -4,10 +4,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import sk.mvp.user_service.common.exception.data.ErrorType;
 import sk.mvp.user_service.common.exception.QApplicationException;
-import sk.mvp.user_service.entity.User;
+import sk.mvp.user_service.user.entity.User;
 import sk.mvp.user_service.user.dto.ContactResp;
 import sk.mvp.user_service.user.dto.UserProfile;
-import sk.mvp.user_service.user.repository.RoleRepository;
 import sk.mvp.user_service.user.repository.UserRepository;
 
 import java.util.Optional;

@@ -1,10 +1,16 @@
 package sk.mvp.user_service.admin.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import sk.mvp.user_service.admin.dto.UserStatusUpdateReq;
+import sk.mvp.user_service.admin.dto.request.UserStatusUpdateReq;
 import sk.mvp.user_service.admin.dto.UserSummary;
+import sk.mvp.user_service.admin.dto.response.AdminUserListItemResp;
 import sk.mvp.user_service.admin.service.IAdminService;
 
 import java.util.List;
@@ -13,6 +19,8 @@ import java.util.List;
 @RequestMapping("api/v1/admin")
 public class AdminController {
     private IAdminService adminService;
+    @Value("${spring.data.web.pageable.max-page-size}")
+    private int maxPageSize;
 
     public AdminController(IAdminService adminService) {
         this.adminService = adminService;
@@ -49,9 +57,12 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
     @GetMapping(value = "/users")
-    public List<UserSummary> getUsers(@RequestParam(defaultValue = "0", name = "page") int page,
-                                      @RequestParam(defaultValue = "5", name = "size") int size) {
-        return adminService.getUsers(page, size);
+    public Page<AdminUserListItemResp> getUsers(@PageableDefault(page = 0, size = 5, sort = "id") Pageable pageable) {
+        // check max pageSize
+        if (pageable.getPageSize() > maxPageSize) {
+            pageable = PageRequest.of(pageable.getPageNumber(), maxPageSize, pageable.getSort());
+        }
+        return adminService.getUsers(pageable);
     }
 
     @GetMapping(value = "/users/filter/by-gender")

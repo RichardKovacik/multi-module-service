@@ -34,10 +34,10 @@ import sk.mvp.user_service.common.exception.QApplicationException;
 import sk.mvp.user_service.common.exception.auth.EmailNotVerifiedException;
 import sk.mvp.user_service.common.exception.data.ErrorType;
 import sk.mvp.user_service.infra.reddis.IRedisService;
-import sk.mvp.user_service.entity.*;
 import sk.mvp.user_service.infra.reddis.RedisCacheKey;
 import sk.mvp.user_service.user.dto.UserProfile;
 import sk.mvp.user_service.auth.factory.UserRegistrationFactory;
+import sk.mvp.user_service.user.entity.User;
 import sk.mvp.user_service.user.repository.UserRepository;
 
 import java.util.List;

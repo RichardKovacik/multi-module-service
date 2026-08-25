@@ -4,10 +4,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import sk.mvp.user_service.auth.dto.request.RegistrationReq;
 import sk.mvp.user_service.common.exception.RoleNotFoundException;
-import sk.mvp.user_service.entity.Contact;
-import sk.mvp.user_service.entity.Gender;
-import sk.mvp.user_service.entity.Role;
-import sk.mvp.user_service.entity.User;
+import sk.mvp.user_service.user.entity.Contact;
+import sk.mvp.user_service.user.entity.Gender;
+import sk.mvp.user_service.user.entity.Role;
+import sk.mvp.user_service.user.entity.User;
 import sk.mvp.user_service.user.repository.RoleRepository;
 
 import java.util.Set;

@@ -6,13 +6,11 @@ import sk.mvp.user_service.auth.factory.VerificationTokenFactory;
 import sk.mvp.user_service.auth.service.IVerificationTokenService;
 import sk.mvp.user_service.common.exception.QApplicationException;
 import sk.mvp.user_service.common.exception.data.ErrorType;
-import sk.mvp.user_service.entity.User;
+import sk.mvp.user_service.user.entity.User;
 import sk.mvp.user_service.auth.entity.VerificationToken;
 import sk.mvp.user_service.user.repository.VerificationTokenRepository;
 
-import java.time.Duration;
 import java.time.Instant;
-import java.util.UUID;
 
 
 @Service

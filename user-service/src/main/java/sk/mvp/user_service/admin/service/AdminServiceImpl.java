@@ -112,7 +112,7 @@ public class AdminServiceImpl implements IAdminService {
         if (users.isEmpty()) {
             return Page.empty();
         }
-       return users.map(user -> AdminUserListItemResp.fromEntity(user));
+       return users.map(AdminUserListItemResp::fromEntity);
     }
 
     @Override
@@ -138,17 +138,21 @@ public class AdminServiceImpl implements IAdminService {
         jwtService.revokeAllTokens(username);
     }
 
-    @Override
+
     @Transactional
-    public void setUserStatus(Long userId, UserStatusUpdateReq req) {
-//        boolean isEnabled = req.status() == UserStatus.ENABLED;
-//        userRepository.setEnabled(userId, isEnabled);
-        // remove actual user sessions only if ist BLOCKED
-//        if (!isEnabled) {
-//            User user = userRepository.findById(userId).orElseThrow(() ->
-//                    new QApplicationException("User with id " + userId + " not found", ErrorType.USER_NOT_FOUND, null));
-//            this.revokeTokens(user.getUsername());
-//        }
+    @Override
+    public void blockUser(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() ->
+                new QApplicationException("User with id " + userId + " not found", ErrorType.USER_NOT_FOUND, null));
+        user.block();
+    }
+
+    @Transactional
+    @Override
+    public void unblockUser(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() ->
+                new QApplicationException("User with id " + userId + " not found", ErrorType.USER_NOT_FOUND, null));
+        user.unBlock();
 
     }
 }

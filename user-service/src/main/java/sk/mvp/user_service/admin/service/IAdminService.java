@@ -16,5 +16,6 @@ public interface IAdminService {
     Page<AdminUserListItemResp> getUsers(Pageable pageable);
     List<UserSummary> getUsersByGender(int page, int rows, String gender);
     void revokeTokens(String username);
-    void setUserStatus(Long userId, UserStatusUpdateReq userStatusUpdateReq);
+    void blockUser(Long userId);
+    void unblockUser(Long userId);
 }

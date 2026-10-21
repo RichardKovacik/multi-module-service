@@ -39,7 +39,7 @@ public class AdminController {
     @PatchMapping(value = "/users/{userid}/status")
     public ResponseEntity<?> setUserStatus(@PathVariable(name = "userid") Long userId,
                                             @RequestBody @Valid UserStatusUpdateReq userStatusUpdateReq) {
-        adminService.setUserStatus(userId, userStatusUpdateReq);
+       // adminService.setUserStatus(userId, userStatusUpdateReq);
         return ResponseEntity.ok().build();
     }
 

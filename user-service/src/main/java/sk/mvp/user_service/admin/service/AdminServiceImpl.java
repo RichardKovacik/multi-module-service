@@ -141,14 +141,14 @@ public class AdminServiceImpl implements IAdminService {
     @Override
     @Transactional
     public void setUserStatus(Long userId, UserStatusUpdateReq req) {
-        boolean isEnabled = req.status() == UserStatus.ENABLED;
-        userRepository.setEnabled(userId, isEnabled);
+//        boolean isEnabled = req.status() == UserStatus.ENABLED;
+//        userRepository.setEnabled(userId, isEnabled);
         // remove actual user sessions only if ist BLOCKED
-        if (!isEnabled) {
-            User user = userRepository.findById(userId).orElseThrow(() ->
-                    new QApplicationException("User with id " + userId + " not found", ErrorType.USER_NOT_FOUND, null));
-            this.revokeTokens(user.getUsername());
-        }
+//        if (!isEnabled) {
+//            User user = userRepository.findById(userId).orElseThrow(() ->
+//                    new QApplicationException("User with id " + userId + " not found", ErrorType.USER_NOT_FOUND, null));
+//            this.revokeTokens(user.getUsername());
+//        }
 
     }
 }

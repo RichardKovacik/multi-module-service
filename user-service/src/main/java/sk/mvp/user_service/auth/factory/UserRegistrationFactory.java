@@ -4,10 +4,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import sk.mvp.user_service.auth.dto.request.RegistrationReq;
 import sk.mvp.user_service.common.exception.RoleNotFoundException;
-import sk.mvp.user_service.user.entity.Contact;
-import sk.mvp.user_service.user.entity.Gender;
-import sk.mvp.user_service.user.entity.Role;
-import sk.mvp.user_service.user.entity.User;
+import sk.mvp.user_service.user.entity.*;
 import sk.mvp.user_service.user.repository.RoleRepository;
 
 import java.util.Set;
@@ -31,8 +28,7 @@ public class UserRegistrationFactory {
                 .password(hashPassword)
                 .gender(Gender.getValidGenderFromCode(registrationReq.getGenderCodeAsCharacter()))
                 .roles(Set.of(role))
-                .enabled(true)
-                .emailVerified(false)
+                .status(UserStatus.PENDING_VERIFICATION)
                 .tokenVersion(1)
                 .build();
         //set one to one relationship
@@ -49,8 +45,7 @@ public class UserRegistrationFactory {
                 .password(hashPassword)
                 .gender(Gender.getValidGenderFromCode(registrationReq.getGenderCodeAsCharacter()))
                 .roles(Set.of(role))
-                .enabled(true)
-                .emailVerified(true)
+                .status(UserStatus.ACTIVE)
                 .tokenVersion(1)
                 .build();
         //set one to one relationship

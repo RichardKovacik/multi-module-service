@@ -36,10 +36,15 @@ public class AdminController {
     /*
      set status of user BLOCKCKED, UNBLOCKED
      */
-    @PatchMapping(value = "/users/{userid}/status")
-    public ResponseEntity<?> setUserStatus(@PathVariable(name = "userid") Long userId,
-                                            @RequestBody @Valid UserStatusUpdateReq userStatusUpdateReq) {
-        adminService.setUserStatus(userId, userStatusUpdateReq);
+    @PatchMapping(value = "/users/{userid}/block")
+    public ResponseEntity<?> blockUser(@PathVariable(name = "userid") Long userId) {
+        adminService.blockUser(userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping(value = "/users/{userid}/unblock")
+    public ResponseEntity<?> unblockUser(@PathVariable(name = "userid") Long userId) {
+        adminService.unblockUser(userId);
         return ResponseEntity.ok().build();
     }
 

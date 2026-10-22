@@ -6,6 +6,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import sk.mvp.user_service.user.entity.Role;
 import sk.mvp.user_service.user.entity.User;
+import sk.mvp.user_service.user.entity.UserStatus;
 
 import java.util.Collection;
 import java.util.List;
@@ -17,9 +18,8 @@ public class QUserDetail implements UserDetails {
     private String username;
     private String password;
     private List<SimpleGrantedAuthority> authorities;
-    private boolean enabled;
     @Getter
-    private boolean emailVerified;
+    private UserStatus userStatus;
 
     public QUserDetail(String username, List<String> roles) {
         this.username = username;
@@ -31,9 +31,7 @@ public class QUserDetail implements UserDetails {
         this.username = user.getUsername();
         this.password = user.getPassword();
         this.authorities = mapRolesToAuthorities(user.getRoles());
-        this.enabled = user.isEnabled();
-        this.emailVerified = user.isEmailVerified();
-
+        this.userStatus = user.getStatus();
     }
 
     @Override
@@ -88,8 +86,7 @@ public class QUserDetail implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return this.enabled;
+        return this.userStatus != UserStatus.BLOCKED;
     }
-
 
 }

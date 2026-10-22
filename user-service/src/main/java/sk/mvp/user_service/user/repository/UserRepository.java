@@ -25,14 +25,6 @@ public interface UserRepository extends JpaRepository <User, Long> {
     @Query("select u from User u JOIN FETCH u.contact c where c.email = :email or u.username = :username")
     Optional<User> findByEmailOrUsername(@Param("email") String email, @Param("username") String username);
 
-    @Modifying
-    @Query("update User u set u.enabled = :flag where u.username = :username")
-    void setEnabled(@Param("username") String username, @Param("flag") boolean flag);
-
-    @Modifying
-    @Query("update User u set u.enabled = :flag where u.id = :userId")
-    void setEnabled(@Param("userId") Long userId, @Param("flag") boolean flag);
-
     @Query("select u.tokenVersion from User u where u.username = :username")
     Optional<Integer> getTokenVersion(@Param("username") String username);
 

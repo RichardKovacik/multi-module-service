@@ -4,8 +4,11 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import sk.mvp.user_service.user.utils.GenderConverter;
 
+import java.time.Instant;
 import java.util.Set;
 
 @Entity
@@ -44,16 +47,9 @@ public class User {
     @Convert(converter = GenderConverter.class)
     private Gender gender;
 
-    // true if email has been verfied
-    private boolean emailVerified;
-
     //init value sets to 1, accesTokenVersion
     @Column(name ="token_version", nullable = false)
     private int tokenVersion;
-
-    // false if user was disabled by admin
-    @Column(name = "enabled", nullable = false)
-    private boolean enabled;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -66,6 +62,18 @@ public class User {
     @Column(name = "version", nullable = false)
     private Integer version;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 30)
+    private UserStatus status;
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt = Instant.now();
+
+    @UpdateTimestamp
+    @Column(nullable = false)
+    private Instant updatedAt = Instant.now();
+
     public User() {
     }
 
@@ -74,6 +82,37 @@ public class User {
         this.password = password;
         this.contact = contact;
         this.gender = gender;
+    }
+
+    public UserStatus getStatus() {
+        return status;
+    }
+
+    private void setStatus(UserStatus newStatus) {
+        if (this.status.isNextStateValid(newStatus)) {
+            this.status = newStatus;
+        } else {
+            throw new IllegalArgumentException("Cannot change status from " + this.status + " to " + newStatus);
+        }
+    }
+
+    public void activate() {
+        this.setStatus(UserStatus.ACTIVE);
+    }
+    public void block() {
+        this.setStatus(UserStatus.BLOCKED);
+    }
+    public void unBlock() {
+        this.setStatus(UserStatus.ACTIVE);
+    }
+    public boolean isActivated() {
+        return this.getStatus() == UserStatus.ACTIVE ||
+                this.getStatus() == UserStatus.BLOCKED ||
+                this.getStatus() == UserStatus.REMOVED;
+    }
+
+    public boolean isBlocked() {
+        return this.getStatus() == UserStatus.BLOCKED;
     }
 
     public Integer getVersion() {
@@ -175,19 +214,4 @@ public class User {
         this.tokenVersion = tokenVersion;
     }
 
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public boolean isEmailVerified() {
-        return emailVerified;
-    }
-
-    public void setEmailVerified(boolean emailVerified) {
-        this.emailVerified = emailVerified;
-    }
 }

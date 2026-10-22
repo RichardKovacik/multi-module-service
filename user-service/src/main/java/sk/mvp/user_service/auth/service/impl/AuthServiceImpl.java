@@ -38,6 +38,7 @@ import sk.mvp.user_service.infra.reddis.RedisCacheKey;
 import sk.mvp.user_service.user.dto.UserProfile;
 import sk.mvp.user_service.auth.factory.UserRegistrationFactory;
 import sk.mvp.user_service.user.entity.User;
+import sk.mvp.user_service.user.entity.UserStatus;
 import sk.mvp.user_service.user.repository.UserRepository;
 
 import java.util.List;
@@ -194,12 +195,13 @@ public class AuthServiceImpl implements IAuthService {
                 VerificationTokenType.EMAIL_VERIFICATION);
 
         User user = foundedToken.getUser();
-        if (user.isEmailVerified()) {
+        if (user.isActivated()) {
             return new VerificationTokenResponse("Email is already verified");
         }
         // hibernate has persistance context, and in the end save updated obejects to db
         foundedToken.setUsed(true);
-        user.setEmailVerified(true);
+        //activate user account
+        user.activate();
 
         return new VerificationTokenResponse("Email successfully verified");
     }

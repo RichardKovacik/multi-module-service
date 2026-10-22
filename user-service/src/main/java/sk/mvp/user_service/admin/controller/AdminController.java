@@ -76,9 +76,16 @@ public class AdminController {
                                               @RequestParam(defaultValue = "5") int size) {
         return adminService.getUsersByGender(page, size, genderCode);
     }
-    @DeleteMapping(value = "/users/{username}/delete")
-    public ResponseEntity<?> deleteUserByUserName(@PathVariable(name = "username") String username) {
-        adminService.deleteUserbyUsername(username);
+
+    @PatchMapping(value = "/users/{userid}/soft-delete")
+    public ResponseEntity<?> softDeleteUser(@PathVariable(name = "userid") Long userId) {
+        adminService.softDeleteUser(userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping(value = "/users/{userid}/hard-delete")
+    public ResponseEntity<?> hardDeleteUser(@PathVariable(name = "userid") Long userId) {
+        adminService.hardDeleteUser(userId);
         return ResponseEntity.ok().build();
     }
 

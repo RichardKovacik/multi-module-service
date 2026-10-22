@@ -6,8 +6,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sk.mvp.user_service.admin.dto.response.AdminUserListItemResp;
-import sk.mvp.user_service.user.entity.UserStatus;
-import sk.mvp.user_service.admin.dto.request.UserStatusUpdateReq;
 import sk.mvp.user_service.admin.dto.UserSummary;
 import sk.mvp.user_service.auth.service.ITokenService;
 import sk.mvp.user_service.common.exception.QApplicationException;
@@ -138,21 +136,37 @@ public class AdminServiceImpl implements IAdminService {
         jwtService.revokeAllTokens(username);
     }
 
+    private User getUserOrThrow(Long userId) {
+        return userRepository.findById(userId).orElseThrow(() ->
+                new QApplicationException("User with id " + userId + " not found", ErrorType.USER_NOT_FOUND, null));
+    }
 
     @Transactional
     @Override
     public void blockUser(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() ->
-                new QApplicationException("User with id " + userId + " not found", ErrorType.USER_NOT_FOUND, null));
+        User user = getUserOrThrow(userId);
         user.block();
     }
 
     @Transactional
     @Override
     public void unblockUser(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() ->
-                new QApplicationException("User with id " + userId + " not found", ErrorType.USER_NOT_FOUND, null));
+        User user = getUserOrThrow(userId);
         user.unBlock();
 
+    }
+
+    @Override
+    @Transactional
+    public void softDeleteUser(Long userId) {
+        User user = getUserOrThrow(userId);
+        user.remove();
+    }
+
+    @Override
+    @Transactional
+    public void hardDeleteUser(Long userId) {
+        User user = getUserOrThrow(userId);
+        userRepository.delete(user);
     }
 }

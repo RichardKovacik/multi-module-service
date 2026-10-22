@@ -84,9 +84,13 @@ public class QUserDetail implements UserDetails {
         return Objects.hash(id, username);
     }
 
+    /**
+     * Account is enabled ONLY if it is ACTIVE.
+     * If DELETED or BLOCKED_BY_ADMIN, this returns false and throws DisabledException.
+     */
     @Override
     public boolean isEnabled() {
-        return this.userStatus != UserStatus.BLOCKED;
+        return this.userStatus == UserStatus.ACTIVE || this.userStatus == UserStatus.PENDING_VERIFICATION;
     }
 
 }

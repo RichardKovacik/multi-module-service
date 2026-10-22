@@ -105,6 +105,9 @@ public class User {
     public void unBlock() {
         this.setStatus(UserStatus.ACTIVE);
     }
+    public void remove() {
+        this.setStatus(UserStatus.REMOVED);
+    }
     public boolean isActivated() {
         return this.getStatus() == UserStatus.ACTIVE ||
                 this.getStatus() == UserStatus.BLOCKED ||

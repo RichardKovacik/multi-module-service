@@ -18,4 +18,6 @@ public interface IAdminService {
     void revokeTokens(String username);
     void blockUser(Long userId);
     void unblockUser(Long userId);
+    void softDeleteUser(Long userId);
+    void hardDeleteUser(Long userId);
 }

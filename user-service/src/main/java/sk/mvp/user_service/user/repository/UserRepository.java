@@ -11,6 +11,7 @@ import sk.mvp.user_service.admin.dto.response.AdminUserListItemResp;
 import sk.mvp.user_service.user.entity.Gender;
 import sk.mvp.user_service.user.entity.User;
 import sk.mvp.user_service.projections.UserSummaryProjection;
+import sk.mvp.user_service.user.entity.UserStatus;
 
 import java.util.Optional;
 
@@ -18,6 +19,7 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository <User, Long> {
     Optional<User> findByFirstName(String username);
     Optional<User> findByUsername(String username);
+    Optional<User> findByUsernameAndStatusNot(String username, UserStatus status);
     Optional<User> findById(Long id);
     @Query("select u from User u JOIN u.contact c where c.email = :email")
     Optional<User> findByEmail(@Param("email") String email);

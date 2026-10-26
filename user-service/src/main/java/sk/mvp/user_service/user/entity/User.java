@@ -95,7 +95,6 @@ public class User {
             throw new IllegalArgumentException("Cannot change status from " + this.status + " to " + newStatus);
         }
     }
-
     public void activate() {
         this.setStatus(UserStatus.ACTIVE);
     }
@@ -112,6 +111,9 @@ public class User {
         return this.getStatus() == UserStatus.ACTIVE ||
                 this.getStatus() == UserStatus.BLOCKED ||
                 this.getStatus() == UserStatus.REMOVED;
+    }
+    public boolean isRemoved() {
+        return this.getStatus() == UserStatus.REMOVED;
     }
 
     public boolean isBlocked() {

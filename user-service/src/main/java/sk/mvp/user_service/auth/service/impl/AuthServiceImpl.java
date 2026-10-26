@@ -15,10 +15,12 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import sk.mvp.common.event.BaseEvent;
 import sk.mvp.common.factory.UserEventFactory;
+import sk.mvp.common.payloads.AccountRestoredPayload;
+import sk.mvp.common.payloads.PasswordResetPayload;
 import sk.mvp.common.payloads.UserRegisteredPayload;
+import sk.mvp.user_service.auth.dto.request.AccountRestoreReq;
 import sk.mvp.user_service.auth.entity.VerificationToken;
 import sk.mvp.user_service.auth.entity.VerificationTokenType;
-import sk.mvp.user_service.auth.service.VerificationLinkService;
 import sk.mvp.user_service.outbox.dto.OutboxTriggerEvent;
 import sk.mvp.user_service.outbox.service.IOutBoxService;
 import sk.mvp.user_service.auth.config.LoginBruteForceConfig;
@@ -38,7 +40,6 @@ import sk.mvp.user_service.infra.reddis.RedisCacheKey;
 import sk.mvp.user_service.user.dto.UserProfile;
 import sk.mvp.user_service.auth.factory.UserRegistrationFactory;
 import sk.mvp.user_service.user.entity.User;
-import sk.mvp.user_service.user.entity.UserStatus;
 import sk.mvp.user_service.user.repository.UserRepository;
 
 import java.util.List;
@@ -206,18 +207,6 @@ public class AuthServiceImpl implements IAuthService {
         return new VerificationTokenResponse("Email successfully verified");
     }
 
-//    @Override
-//    @Transactional
-//    public VerificationTokenResponse verifyAndUpdatePasswordResetVerificationToken(String token, String newPassword) {
-//        VerificationToken foundedToken = verificationTokenService.getValidVerificationToken(token);
-//        //token is valid continues flow
-//        User user = foundedToken.getUser();
-//        //update db
-//        user.setPassword(passwordEncoder.encode(newPassword));
-//        foundedToken.setUsed(true);
-//        return new VerificationTokenResponse("Password reset successfully processed");
-//    }
-
     private void isEmailOrUsernameUnique(String email, String username) {
         userRepository.findByEmailOrUsername(email, username).ifPresent(user -> {
             if (user.getContact().getEmail().equalsIgnoreCase(email)) {
@@ -227,5 +216,34 @@ public class AuthServiceImpl implements IAuthService {
                 throw new QApplicationException(null, ErrorType.USERNAME_DUPLICATED, null);
             }
         });
+    }
+
+    @Override
+    @Transactional
+    public void intiateAccountRestoreRequest(AccountRestoreReq req) {
+       User user = userRepository.findByEmail(req.email()).orElseThrow(() ->
+                new QApplicationException(null, ErrorType.USER_NOT_FOUND, null));
+       // check if the user is really Deleted(disabled)
+        if (!user.isRemoved()) {
+            throw new QApplicationException("User account is already enabled", ErrorType.AUTH_BAD_REQUEST, null);
+        }
+
+        VerificationToken token = verificationTokenService.createVerificationToken(user, VerificationTokenType.ACCOUNT_RESTORE);
+
+        // Linkk is only for demo purpose, in real world link would be to Frontend uri
+        String link = verificationLinkService.generateVerificationUrl(VerificationTokenType.ACCOUNT_RESTORE, token.getToken());
+
+        // create account restore event
+        BaseEvent<AccountRestoredPayload> accountRestoredPayloadBaseEvent = this.userEventFactory.createAccountRestoreRequestedEvent(
+                req.email(),
+                link,
+                user.getId().toString(),
+                MDC.get(CORRELATION_ID_HEADER),
+                userEventTopicName);
+        //save event to Outbox repo
+        outBoxService.saveOutbox(accountRestoredPayloadBaseEvent);
+        //trigger asynch send only after sucessfull commit transaction
+        eventPublisher.publishEvent(new OutboxTriggerEvent(accountRestoredPayloadBaseEvent.eventId()));
+
     }
 }

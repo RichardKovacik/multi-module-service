@@ -1,4 +1,4 @@
-package sk.mvp.user_service.auth.service;
+package sk.mvp.user_service.auth.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

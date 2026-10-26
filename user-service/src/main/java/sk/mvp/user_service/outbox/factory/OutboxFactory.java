@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import sk.mvp.common.event.BaseEvent;
 import sk.mvp.common.event.EventType;
+import sk.mvp.common.payloads.AccountRestoredPayload;
 import sk.mvp.common.payloads.PasswordResetPayload;
 import sk.mvp.common.payloads.UserRegisteredPayload;
 import sk.mvp.user_service.outbox.entity.OutBoxStatus;
@@ -23,8 +24,9 @@ public class OutboxFactory {
 
     private static final Map<String, Class<?>> TYPE_MAP = Map.of(
             EventType.USER_REGISTERED.toString(), UserRegisteredPayload.class,
-            EventType.PASSWORD_RESET_REQUESTED.toString(), PasswordResetPayload.class
-            // Tu pridáš ďalšie eventy
+            EventType.PASSWORD_RESET_REQUESTED.toString(), PasswordResetPayload.class,
+            EventType.ACCOUNT_RESTORE_REQUESTED.toString(), AccountRestoredPayload.class
+            // here add another events
     );
 
     public Class<?> getPayloadClass(String eventType) {

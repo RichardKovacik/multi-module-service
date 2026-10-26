@@ -15,10 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import sk.mvp.user_service.auth.dto.request.LoginReq;
-import sk.mvp.user_service.auth.dto.request.LogoutReq;
-import sk.mvp.user_service.auth.dto.request.RefreshTokenReq;
-import sk.mvp.user_service.auth.dto.request.RegistrationReq;
+import sk.mvp.user_service.auth.dto.request.*;
 import sk.mvp.user_service.auth.dto.response.TokenPair;
 import sk.mvp.user_service.auth.dto.response.VerificationTokenResponse;
 import sk.mvp.user_service.auth.jwt.JwtProvider;
@@ -54,6 +51,7 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Invalid credentials"),
             @ApiResponse(responseCode = "403", description = "Account locked or disabled")
     })
+
     @PostMapping(value = "/login")
     public ResponseEntity<?> login(@RequestBody @Valid LoginReq loginReq,
                                    @Parameter(description = "Client platform type (web/mobile)", example = "web")
@@ -150,8 +148,12 @@ public class AuthController {
         if ("web".equalsIgnoreCase(clientType)) {
             cookieUtil.clearTokenCookies(response);
         }
+        return ResponseEntity.ok().build();
+    }
 
-
+    @PostMapping(value = "/account/restore-request")
+    public ResponseEntity<?> requestAccountRestore(@Valid @RequestBody AccountRestoreReq request) {
+        authService.intiateAccountRestoreRequest(request);
         return ResponseEntity.ok().build();
     }
 }

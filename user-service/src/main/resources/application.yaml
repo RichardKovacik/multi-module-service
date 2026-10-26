@@ -71,12 +71,14 @@ app:
     uri:
       email-verification: /api/v1/auth/email/confirm
       password-reset: /api/v1/auth/password/reset/validate-token
+      account-restore: /api/v1/auth/account/restore-confirm
   # verification tokens configs
   auth:
     verification-token:
       ttl:
         email-verification: P2D
-        password-reset: PT15M
+        password-reset: PT10M
+        account-restore: PT10M
   # security max attempts
   security:
     enabled: true

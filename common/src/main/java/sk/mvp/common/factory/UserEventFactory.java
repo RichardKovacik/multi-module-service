@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import sk.mvp.common.event.BaseEvent;
 import sk.mvp.common.event.EventMetadata;
 import sk.mvp.common.event.EventType;
+import sk.mvp.common.payloads.AccountRestoredPayload;
 import sk.mvp.common.payloads.PasswordResetPayload;
 import sk.mvp.common.payloads.UserRegisteredPayload;
 
@@ -61,6 +62,29 @@ public class UserEventFactory {
                 .destinationTopic(destinationTopic)
                 .userId(userId)
                 .payload(PasswordResetPayload.builder()
+                        .email(email)
+                        .link(link)
+                        .build())
+                .build();
+    }
+
+    public BaseEvent<AccountRestoredPayload> createAccountRestoreRequestedEvent(String email,
+                                                                               String link,
+                                                                               String userId,
+                                                                               String correlationId,
+                                                                               String destinationTopic) {
+        return BaseEvent.<AccountRestoredPayload>builder()
+                .eventId(UUID.randomUUID())
+                .createdAt(Instant.now())
+                .eventType(EventType.ACCOUNT_RESTORE_REQUESTED)
+                .metadata(EventMetadata.builder()
+                        .correlationId(correlationId)
+                        .sourceService(applicationName)
+                        .build())
+                .eventVersion(eventVersion)
+                .destinationTopic(destinationTopic)
+                .userId(userId)
+                .payload(AccountRestoredPayload.builder()
                         .email(email)
                         .link(link)
                         .build())

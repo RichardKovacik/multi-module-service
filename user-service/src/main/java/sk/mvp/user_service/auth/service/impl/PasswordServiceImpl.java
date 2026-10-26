@@ -15,7 +15,6 @@ import sk.mvp.user_service.auth.entity.VerificationToken;
 import sk.mvp.user_service.auth.entity.VerificationTokenType;
 import sk.mvp.user_service.auth.service.IPasswordService;
 import sk.mvp.user_service.auth.service.IVerificationTokenService;
-import sk.mvp.user_service.auth.service.VerificationLinkService;
 import sk.mvp.user_service.user.entity.User;
 import sk.mvp.user_service.outbox.dto.OutboxTriggerEvent;
 import sk.mvp.user_service.outbox.service.IOutBoxService;

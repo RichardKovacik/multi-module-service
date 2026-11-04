@@ -11,7 +11,7 @@ public enum UserStatus {
         PENDING_VERIFICATION.nextStates = Set.of(ACTIVE, REMOVED);
         ACTIVE.nextStates = Set.of(BLOCKED, REMOVED);
         BLOCKED.nextStates = Set.of(ACTIVE, REMOVED);
-        REMOVED.nextStates = Set.of();
+        REMOVED.nextStates = Set.of(ACTIVE);
     }
     private Set<UserStatus> nextStates;
 

@@ -89,6 +89,15 @@ public class User {
     }
 
     private void setStatus(UserStatus newStatus) {
+      if (newStatus == null) {
+          throw new IllegalArgumentException("New status cannot be null");
+      }
+       //Intial status in creation
+        if (this.status == null) {
+            this.status = newStatus;
+            return;
+        }
+
         if (this.status.isNextStateValid(newStatus)) {
             this.status = newStatus;
         } else {
@@ -98,6 +107,7 @@ public class User {
     public void activate() {
         this.setStatus(UserStatus.ACTIVE);
     }
+
     public void block() {
         this.setStatus(UserStatus.BLOCKED);
     }
@@ -107,6 +117,7 @@ public class User {
     public void remove() {
         this.setStatus(UserStatus.REMOVED);
     }
+    public void create(){this.setStatus(UserStatus.PENDING_VERIFICATION);}
     public boolean isActivated() {
         return this.getStatus() == UserStatus.ACTIVE ||
                 this.getStatus() == UserStatus.BLOCKED ||

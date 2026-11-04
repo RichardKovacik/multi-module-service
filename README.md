@@ -91,81 +91,177 @@ An isolated service that reacts to system events.
 
 ---
 
-## 🚀 Quick Start (Local Development)
+# 🚀 Getting Started
 
-Follow these steps to get the project up and running on your local machine.
+## 📋 Prerequisites
 
-### 📋 Prerequisites
-To minimize setup friction, you only need to have the following installed:
-*   **JDK 21** (or higher)
-*   **Docker & Docker Compose**
-*   **IntelliJ IDEA** (Recommended IDE)
-*   *Note: You do **NOT** need to install Maven globally. The project uses the bundled Maven Wrapper.*
+### Local Development Mode
+
+Required:
+
+- JDK 21+
+- Docker & Docker Compose
+- IntelliJ IDEA (recommended)
+
+> ✅ Maven installation is **not required**. The project uses the bundled Maven Wrapper (`mvnw`).
+
+### Full Test Environment Deployment
+
+Required:
+
+- JDK 21+
+- Maven
+- Docker & Docker Compose
+- Git Bash (Windows)
 
 ---
 
-### Step 1: Clone the Repository
-Open your terminal or command prompt and run:
+## 📥 Clone Repository
+
 ```bash
-git clone https://github.com
-cd your-repo-name
+git clone https://github.com/your-org/your-repository.git
+cd multiservice
 ```
 
 ---
 
-### Step 2: Launch Development Infrastructure (Docker)
-Before running the Java applications, you must start the core infrastructure (PostgreSQL, Redis, Kafka, etc.). 
+# 🛠 Option 1: Local Development Setup
 
-Navigate to the directory where your Docker files are located and start the containers using the specific dev file:
+Recommended for active development and debugging.
+
+## Step 1: Start Development Infrastructure
+
+Start the required infrastructure services:
+
+- PostgreSQL
+- Kafka
+- Kafka UI
+- Other supporting services
+
 ```bash
+cd docker/dev-infra
+
 docker compose -f docker-compose-infra-dev.yaml up -d
 ```
-*(To stop the infrastructure containers later, run `docker compose -f docker-compose-infra-dev.yaml down`)*
+
+Verify containers are running:
+
+```bash
+docker ps
+```
 
 ---
 
-### Step 3: Build the Project
-Once the infrastructure is running, you need to compile the parent project and link all internal module dependencies together. Run this command from the project **root** directory:
+## Step 2: Build the Project
+
+From the project root directory:
 
 ```bash
-# On Windows (PowerShell):
+# Windows
 .\mvnw clean install -DskipTests
 
-# On Mac / Linux:
+# Linux / macOS
 ./mvnw clean install -DskipTests
 ```
 
 ---
 
-### Step 4: Run the Application Services
+## Step 3: Run Application Services
 
-Now you can start your microservices. Choose either **Option A** (via the IDE UI) or **Option B** (via Terminal).
+### Option A: IntelliJ IDEA (Recommended)
 
-#### Option A: Running via IntelliJ IDEA (Recommended & Easiest)
-1. Open IntelliJ IDEA, click **Open**, and select the root `pom.xml` to import the project.
-2. Ensure the project is using **JDK 21** (*File -> Project Structure -> Project*). IntelliJ will automatically detect and use the bundled Maven Wrapper.
-3. Wait for the IDE to finish indexing and downloading dependencies.
-4. Locate the main application class for the service you want to start (e.g., `UserServiceApplication.java` inside `user-service`).
-5. Click the green **Run** (Play) button next to the `main` method.
-6. *To apply the `dev` profile:* Go to *Run -> Edit Configurations*, select your application, and add `-Dspring-boot.run.profiles=dev` into the **VM options**.
+1. Open the project root in IntelliJ IDEA.
+2. Ensure **JDK 21** is configured.
+3. Wait for dependency download and indexing to finish.
+4. Locate the desired service application class.
+5. Start the service using the **Run** button.
 
-#### Option B: Running via Terminal (Using Maven Wrapper)
-If you prefer the command line, run the following commands from the project **root** directory (quotes are required to prevent Windows PowerShell syntax errors):
+To use the development profile:
+
+```text
+-Dspring.profiles.active=dev
+```
+
+---
+
+### Option B: Terminal
+
+Run services individually from the project root:
 
 ```bash
-# Start User Service (Port 8081)
+# User Service
 .\mvnw spring-boot:run -pl user-service "-Dspring-boot.run.profiles=dev"
 
-# Start Notify Service
+# Notify Service
 .\mvnw spring-boot:run -pl notify-service "-Dspring-boot.run.profiles=dev"
 ```
-*(If you are on Mac or Linux, simply replace `.\mvnw` with `./mvnw`)*
 
-## ⚙️ 4. Environment Variables & Local Configuration
+Linux/macOS:
 
-For local development, the application requires the **`dev`** profile to be active. Custom environment variables (such as third-party API keys, webhook secrets, or external API URLs) are managed via a local `.env` file located in the project root directory.
+```bash
+./mvnw spring-boot:run -pl user-service -Dspring-boot.run.profiles=dev
+```
 
-Thanks to Spring Boot's native configuration import feature, **no IDE plugins or terminal hacks are required** to load these variables. Spring is pre-configured to automatically import them at startup:
+---
+
+# 🧪 Option 2: Full Test Environment Deployment
+
+Use this option when you want to run the complete test environment inside Docker.
+
+The deployment includes:
+
+- PostgreSQL
+- Kafka
+- Supporting infrastructure
+- All Java microservices
+- Test environment configuration
+
+## Start Test Environment
+
+```bash
+bash deploy-test-env.sh
+```
+
+---
+
+## What the Script Does
+
+1. Builds the complete multi-module Maven project.
+2. Packages application artifacts.
+3. Builds required Docker images.
+4. Loads the test environment `.env` configuration.
+5. Starts the entire test environment using Docker Compose.
+6. Validates that all containers have started successfully.
+
+---
+
+## Validate Deployment
+
+Verify all containers are running:
+
+```bash
+docker ps
+```
+
+All infrastructure and application containers should be in the **Up** state.
+
+---
+
+## Stop Test Environment
+
+```bash
+docker compose -f docker/test-env/docker-compose-env-test.yaml down
+```
+
+---
+
+# ⚙️ Environment Variables
+
+The project uses the **dev** Spring profile for local development.
+
+Custom configuration values (API keys, secrets, external URLs, etc.) are loaded from a local `.env` file located in the repository root.
+
+Spring Boot automatically imports this file:
 
 ```yaml
 spring:
@@ -173,16 +269,24 @@ spring:
     import: "file:../../.env[.properties]"
 ```
 
-### Step 1: Create your local `.env` file
-The repository contains a template with placeholder values. You need to copy it to enable your local overrides:
+---
 
-1. Locate the **`.env.example.dev`** file in the project **root** directory.
-2. Duplicate it in the same directory and rename the copy to exactly **`.env`**.
-3. Open the newly created **`.env`** file and fill in your actual private data (e.g., your custom API keys, external service URLs, or local secrets).
+## Create Local `.env`
 
-> ⚠️ **Important:** The `.env` file contains sensitive information and is automatically excluded by Git. Never commit your real `.env` file to the repository.
+1. Locate `.env.example.dev` in the repository root.
+2. Copy it:
+
+```bash
+cp .env.example.dev .env
+```
+
+3. Replace placeholder values with your local configuration.
 
 ---
+
+> ⚠️ The `.env` file may contain sensitive information and must never be committed to source control.
+>
+> The file is already excluded through `.gitignore`.
 
 ## 📖 5. API Documentation & Testing
 

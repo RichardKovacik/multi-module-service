@@ -11,7 +11,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import sk.mvp.common.event.BaseEvent;
 import sk.mvp.common.factory.UserEventFactory;
+import sk.mvp.common.payloads.AccountRestoredPayload;
+import sk.mvp.user_service.auth.dto.request.AccountRestoreReq;
+import sk.mvp.user_service.auth.entity.VerificationTokenType;
+import sk.mvp.user_service.auth.service.impl.VerificationLinkService;
+import sk.mvp.user_service.factory.TestDataFactory;
+import sk.mvp.user_service.outbox.dto.OutboxTriggerEvent;
 import sk.mvp.user_service.outbox.service.IOutBoxService;
 import sk.mvp.user_service.auth.dto.request.RegistrationReq;
 import sk.mvp.user_service.auth.dto.response.VerificationTokenResponse;
@@ -21,11 +28,11 @@ import sk.mvp.user_service.auth.service.impl.AuthServiceImpl;
 import sk.mvp.user_service.common.exception.QApplicationException;
 import sk.mvp.user_service.common.exception.data.ErrorType;
 import sk.mvp.user_service.infra.reddis.IRedisService;
-import sk.mvp.user_service.user.entity.Contact;
-import sk.mvp.user_service.user.entity.Gender;
 import sk.mvp.user_service.user.entity.User;
 import sk.mvp.user_service.auth.entity.VerificationToken;
+import sk.mvp.user_service.user.entity.UserStatus;
 import sk.mvp.user_service.user.repository.UserRepository;
+import sk.mvp.user_service.user.repository.VerificationTokenRepository;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -47,93 +54,192 @@ public class AuthServiceTest {
     @Mock private IOutBoxService outBoxService;
     @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private PasswordEncoder passwordEncoder;
+    @Mock private VerificationTokenRepository tokenRepository;
+    @Mock private VerificationLinkService verificationLinkService;
+    private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
+    private final String userEventTopicName = "user-event-topic";
 
     @InjectMocks
     private AuthServiceImpl authService;
-
-    RegistrationReq mockReq;
-    Contact mockContact;
-    User mockUser;
 
     @BeforeEach
     void setUp() {
     }
 
-    private VerificationToken createMockToken(boolean verified, boolean used, Instant expiry) {
-        User user = new User();
-        user.setEmailVerified(verified);
-
-        VerificationToken token = new VerificationToken();
-        token.setUser(user);
-        token.setUsed(used);
-        token.setExpiresAt(expiry);
-        token.setToken("tokenUUID");
-        return token;
-    }
-
-
     @Test
-    @DisplayName("Should throw exception during registration if user already exists")
-    void registerUser_ShouldThrowException_WhenEmailOrUsernameAlreadyExists() {
-        mockReq = new RegistrationReq("janko", "pp", "jank@gmail.com", "M");
-        mockContact = new Contact(mockReq.getEmail(),"");
-        mockUser = new User(mockReq.getUsername(), mockReq.getPassword(), mockContact, Gender.MALE);
-        mockUser.setUsername(mockReq.getUsername());
-        mockUser.setContact(mockContact);
-        mockUser.setId(1);
+    @DisplayName("Should throw exception during registration if email is already used")
+    void registerUser_ShouldThrowException_WhenEmailAlreadyExists() {
 
         //arrange
+        RegistrationReq req = TestDataFactory.createRegistrationReq();
+
+        User mockUser = TestDataFactory.createValidUserInstance();
+        mockUser.getContact().setEmail(req.getEmail());
+
         when(userRepository.findByEmailOrUsername(anyString(), anyString())).thenReturn(Optional.of(mockUser));
 
-        //assert + act
-        assertThrows(QApplicationException.class, () -> authService.registerUser(mockReq));
+        //act + assert
+        QApplicationException ex = assertThrows(QApplicationException.class, () -> authService.registerUser(req));
+        assertEquals(ErrorType.EMAIL_DUPLICATED, ex.getErrorType());
+        // verifies that user save method was never called
+        verify(userRepository, never()).save(any());
 
     }
 
     @Test
-    void verifyEmailVerificationToken_ShouldReturnToken_WhenTokenIsValid(){
+    @DisplayName("Should throw exception during registration if username is already used")
+    void registerUser_ShouldThrowException_WhenUsernameAlreadyExists() {
         //arrange
-        VerificationToken mockToken = createMockToken(false , false , Instant.now().plusSeconds(30));
-       // when(verificationTokenService.getVerificationToken(mockToken.getToken())).thenReturn(mockToken);
-        //act
-        VerificationTokenResponse result = authService.verifyAndUpdateEmailVerificationToken(mockToken.getToken());
-        //assert
-        assertTrue(mockToken.isUsed());
-        assertTrue(mockToken.getUser().isEmailVerified());
-        assertEquals("Email successfully verified", result.message());
+        RegistrationReq req = TestDataFactory.createRegistrationReq();
+
+        User mockUser = TestDataFactory.createValidUserInstance();
+        mockUser.setUsername(req.getUsername());
+
+        when(userRepository.findByEmailOrUsername(anyString(), anyString())).thenReturn(Optional.of(mockUser));
+
+        //act + assert
+        QApplicationException ex = assertThrows(QApplicationException.class, () -> authService.registerUser(req));
+        assertEquals(ErrorType.USERNAME_DUPLICATED, ex.getErrorType());
+
+        // verifies that user save method was never called
+        verify(userRepository, never()).save(any());
+
     }
+
     @Test
-    void verifyEmailVerificationToken_ShouldReturnCustomExpirationExc_WhenTokenIsExpired(){
+    void confirmEmail_shouldReturnAlreadyVerifiedMessage_WhenUserAlreadyActivated() {
+
         //arrange
-        VerificationToken mockToken = createMockToken(false , false , Instant.now().minusSeconds(30));
-        //when(verificationTokenService.getVerificationToken(mockToken.getToken())).thenReturn(mockToken);
+        User user = TestDataFactory.createValidUserInstance();
+        user.activate();
+
+        VerificationToken token =
+                TestDataFactory.createMockToken(VerificationTokenType.EMAIL_VERIFICATION, Instant.now().plusSeconds(30));
+        token.setUser(user);
+
+        when(verificationTokenService.getValidVerificationToken(
+                token.getToken(),
+                VerificationTokenType.EMAIL_VERIFICATION))
+                .thenReturn(token);
+
         //act
-        // 2. Act & Capture the exception
-        QApplicationException exception = assertThrows(QApplicationException.class, () -> {
-            authService.verifyAndUpdateEmailVerificationToken(mockToken.getToken());
-        });
+        VerificationTokenResponse response =
+                authService.confirmEmail(
+                        token.getToken());
+
         //assert
-        assertEquals(ErrorType.VERIFICATION_TOKEN_EXPIRED, exception.getErrorType());
+        assertEquals(
+                "Email is already verified",
+                response.message());
+
+        assertFalse(token.isUsed());
+    }
+
+    @Test
+    void confirmEmail_shouldReturnVerifiedSuccessMessage_WhenUserInPendingState() {
+
+        //arrange
+        User user = TestDataFactory.createValidUserInstance();
+
+        VerificationToken token =
+                TestDataFactory.createMockToken(VerificationTokenType.EMAIL_VERIFICATION, Instant.now().plusSeconds(30));
+        token.setUser(user);
+
+        when(verificationTokenService.getValidVerificationToken(
+                token.getToken(),
+                VerificationTokenType.EMAIL_VERIFICATION))
+                .thenReturn(token);
+
+        //act
+        VerificationTokenResponse response =
+                authService.confirmEmail(
+                        token.getToken());
+
+        //assert
+        assertEquals(
+                "Email successfully verified",
+                response.message());
+
+        assertTrue(token.isUsed());
+    }
+
+    @Test
+    void intiateAccountRestoreRequest_shouldCreateAccountRestoreRequest_WhenDeletedUserExists() {
+
+        // arrange
+        AccountRestoreReq req =
+                new AccountRestoreReq("john@test.com");
+
+        User user = TestDataFactory.createValidUserInstance();
+        user.remove();
+        user.getContact().setEmail(req.email());
+
+        VerificationToken token =
+                TestDataFactory.createMockToken(
+                        VerificationTokenType.ACCOUNT_RESTORE,
+                        Instant.now().plusSeconds(3600)
+                );
+
+        BaseEvent<AccountRestoredPayload> event = mock(BaseEvent.class);
+
+        when(userRepository.findByEmail(req.email()))
+                .thenReturn(Optional.of(user));
+
+        when(verificationTokenService.createVerificationToken(
+                user,
+                VerificationTokenType.ACCOUNT_RESTORE))
+                .thenReturn(token);
+
+       when(verificationLinkService.generateVerificationUrl(
+                VerificationTokenType.ACCOUNT_RESTORE,
+                token.getToken()))
+                .thenReturn("link");
+
+        when(userEventFactory.createAccountRestoreRequestedEvent(
+                anyString(),
+                anyString(),
+                anyString(),
+                isNull(),
+                isNull()))
+                .thenReturn(event);
+
+        // act
+        authService.intiateAccountRestoreRequest(req);
+
+        // assert
+        verify(userRepository)
+                .findByEmail(req.email());
+
+        verify(verificationTokenService)
+                .createVerificationToken(
+                        user,
+                        VerificationTokenType.ACCOUNT_RESTORE
+                );
+
+        verify(outBoxService)
+                .saveOutbox(event);
+
+        verify(eventPublisher)
+                .publishEvent(any(OutboxTriggerEvent.class));
+    }
+
+    @Test
+    void intiateAccountRestoreRequest_shouldThrowException_WhenUserIsNotDeleted() {
+        AccountRestoreReq req =
+                new AccountRestoreReq("john@test.com");
+
+        User user = TestDataFactory.createValidUserInstance();
+        user.activate();
+
+        when(userRepository.findByEmail(req.email()))
+                .thenReturn(Optional.of(user));
+
+        // act & assert
+        QApplicationException ex = assertThrows(QApplicationException.class, () -> authService.intiateAccountRestoreRequest(req));
+        assertEquals(ErrorType.AUTH_BAD_REQUEST, ex.getErrorType());
+        assertEquals("User account is active", ex.getMessage());
+
     }
 
 
-
-//    @Test
-//    @DisplayName("Should succesfuly save user")
-//    void registerUser_ShouldSaveUser_WhenValidData() {
-//        //arrange
-//        when(userRepository.findByEmailOrUsername(anyString(), anyString())).thenReturn(Optional.empty());
-//        when(passwordEncoder.encode(anyString())).thenReturn("hashed_pwd");
-//        when(userRepository.save(any(User.class))).thenReturn(mockUser);
-//
-//        // Act
-//        authService.registerUser(mockReq);
-//
-//        verify(userRepository, times(1)).save(any(User.class));
-//        verify(verificationTokenService, times(1)).createVerificationToken(any(User.class));
-//        verify(outBoxService, times(1)).saveOutbox(any());
-////        verify(eventPublisher, times(1)).publishEvent(any());
-//
-//
-//    }
 }

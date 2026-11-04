@@ -16,9 +16,9 @@ import org.springframework.stereotype.Service;
 import sk.mvp.common.event.BaseEvent;
 import sk.mvp.common.factory.UserEventFactory;
 import sk.mvp.common.payloads.AccountRestoredPayload;
-import sk.mvp.common.payloads.PasswordResetPayload;
 import sk.mvp.common.payloads.UserRegisteredPayload;
 import sk.mvp.user_service.auth.dto.request.AccountRestoreReq;
+import sk.mvp.user_service.auth.dto.request.AccountRestoreSubmitReq;
 import sk.mvp.user_service.auth.entity.VerificationToken;
 import sk.mvp.user_service.auth.entity.VerificationTokenType;
 import sk.mvp.user_service.outbox.dto.OutboxTriggerEvent;
@@ -145,7 +145,7 @@ public class AuthServiceImpl implements IAuthService {
         }
         //TODO: 2.check if it is email in good pattern using validator, regex ?? Bean validator
         //1. check if email and username is unique
-        isEmailOrUsernameUnique(registrationReq.getEmail(), registrationReq.getUsername());
+        emailOrUsernameUniqueCheck(registrationReq.getEmail(), registrationReq.getUsername());
 
         // create new instance of user using custom factory method
         User user = userRegistrationFactory.createUnverifiedUser(registrationReq);
@@ -191,7 +191,7 @@ public class AuthServiceImpl implements IAuthService {
 
     @Transactional
     @Override
-    public VerificationTokenResponse verifyAndUpdateEmailVerificationToken(String verificationToken) {
+    public VerificationTokenResponse confirmEmail(String verificationToken) {
         VerificationToken foundedToken = verificationTokenService.getValidVerificationToken(verificationToken,
                 VerificationTokenType.EMAIL_VERIFICATION);
 
@@ -207,7 +207,7 @@ public class AuthServiceImpl implements IAuthService {
         return new VerificationTokenResponse("Email successfully verified");
     }
 
-    private void isEmailOrUsernameUnique(String email, String username) {
+    private void emailOrUsernameUniqueCheck(String email, String username) {
         userRepository.findByEmailOrUsername(email, username).ifPresent(user -> {
             if (user.getContact().getEmail().equalsIgnoreCase(email)) {
                 throw new QApplicationException(null, ErrorType.EMAIL_DUPLICATED, null);
@@ -223,9 +223,9 @@ public class AuthServiceImpl implements IAuthService {
     public void intiateAccountRestoreRequest(AccountRestoreReq req) {
        User user = userRepository.findByEmail(req.email()).orElseThrow(() ->
                 new QApplicationException(null, ErrorType.USER_NOT_FOUND, null));
-       // check if the user is really Deleted(disabled)
+        // accout restoration is enabled only for deleted users
         if (!user.isRemoved()) {
-            throw new QApplicationException("User account is already enabled", ErrorType.AUTH_BAD_REQUEST, null);
+            throw new QApplicationException("User account is active", ErrorType.AUTH_BAD_REQUEST, null);
         }
 
         VerificationToken token = verificationTokenService.createVerificationToken(user, VerificationTokenType.ACCOUNT_RESTORE);
@@ -244,6 +244,16 @@ public class AuthServiceImpl implements IAuthService {
         outBoxService.saveOutbox(accountRestoredPayloadBaseEvent);
         //trigger asynch send only after sucessfull commit transaction
         eventPublisher.publishEvent(new OutboxTriggerEvent(accountRestoredPayloadBaseEvent.eventId()));
+    }
 
+    @Override
+    @Transactional
+    public void accuntRestoreSubmit(AccountRestoreSubmitReq req) {
+        VerificationToken validToken = verificationTokenService.getValidVerificationToken(req.token(), VerificationTokenType.ACCOUNT_RESTORE);
+        //set token to used
+        validToken.setUsed(true);
+        //set new user state t oACTIVE
+        User user = validToken.getUser();
+        user.activate();
     }
 }

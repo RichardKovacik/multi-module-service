@@ -1,6 +1,7 @@
 package sk.mvp.user_service.auth.service;
 
 import sk.mvp.user_service.auth.dto.request.AccountRestoreReq;
+import sk.mvp.user_service.auth.dto.request.AccountRestoreSubmitReq;
 import sk.mvp.user_service.auth.dto.request.RegistrationReq;
 import sk.mvp.user_service.auth.dto.response.TokenPair;
 import sk.mvp.user_service.auth.dto.request.LoginReq;
@@ -12,6 +13,7 @@ public interface IAuthService {
     TokenPair refreshTokens(String refreshToken);
     UserProfile registerUser(RegistrationReq user);
     void logout(String refreshToken, String accessToken);
-    VerificationTokenResponse verifyAndUpdateEmailVerificationToken(String verificationToken);
+    VerificationTokenResponse confirmEmail(String verificationToken);
     void intiateAccountRestoreRequest(AccountRestoreReq req);
+    void accuntRestoreSubmit(AccountRestoreSubmitReq req);
 }

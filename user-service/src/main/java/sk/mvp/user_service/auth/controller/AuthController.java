@@ -123,8 +123,8 @@ public class AuthController {
     }
 
     @GetMapping(value = "/email/confirm")
-    public VerificationTokenResponse verifyEmailVerificationToken(@RequestParam("token") @NotNull @NotBlank String token) {
-        return authService.verifyAndUpdateEmailVerificationToken(token);
+    public VerificationTokenResponse confirmEmail(@RequestParam("token") @NotNull @NotBlank String token) {
+        return authService.confirmEmail(token);
     }
 
     @PostMapping(value = "/logout")
@@ -151,9 +151,15 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/account/restore-request")
+    @PostMapping(value = "/account-restore-request")
     public ResponseEntity<?> requestAccountRestore(@Valid @RequestBody AccountRestoreReq request) {
         authService.intiateAccountRestoreRequest(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/account-restore")
+    public ResponseEntity<?> accountRestorationConfirm(@Valid @RequestBody AccountRestoreSubmitReq request) {
+        authService.accuntRestoreSubmit(request);
         return ResponseEntity.ok().build();
     }
 }

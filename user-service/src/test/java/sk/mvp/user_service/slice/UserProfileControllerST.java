@@ -40,7 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Import(JwtConfig.class)
 @AutoConfigureMockMvc(addFilters = false)
-public class UserProfileControllerTest {
+public class UserProfileControllerST {
     @Autowired
     MockMvc mockMvc; // simulates HTTP requests
 

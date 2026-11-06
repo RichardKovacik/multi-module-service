@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         ),
         excludeAutoConfiguration = SecurityAutoConfiguration.class
 )
-public class AuthControllerTest {
+public class AuthControllerST {
     @Autowired
     private MockMvc mockMvc;
 

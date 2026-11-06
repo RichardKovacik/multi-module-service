@@ -13,7 +13,7 @@ import sk.mvp.user_service.outbox.job.OutboxRealyJob;
 @Import(TestContainerConfig.class)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
-public abstract class BaseIntegrationTest {
+public abstract class BaseIntegrationIT {
     @MockBean
     OutboxRealyJob realyJob;
 }

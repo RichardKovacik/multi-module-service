@@ -90,7 +90,8 @@ public class QUserDetail implements UserDetails {
      */
     @Override
     public boolean isEnabled() {
-        return this.userStatus == UserStatus.ACTIVE || this.userStatus == UserStatus.PENDING_VERIFICATION;
+        return this.userStatus != UserStatus.BLOCKED;
     }
+
 
 }

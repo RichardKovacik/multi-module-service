@@ -21,6 +21,7 @@ import sk.mvp.user_service.auth.dto.request.AccountRestoreReq;
 import sk.mvp.user_service.auth.dto.request.AccountRestoreSubmitReq;
 import sk.mvp.user_service.auth.entity.VerificationToken;
 import sk.mvp.user_service.auth.entity.VerificationTokenType;
+import sk.mvp.user_service.common.exception.auth.AccountDeletedException;
 import sk.mvp.user_service.outbox.dto.OutboxTriggerEvent;
 import sk.mvp.user_service.outbox.service.IOutBoxService;
 import sk.mvp.user_service.auth.config.LoginBruteForceConfig;
@@ -120,8 +121,10 @@ public class AuthServiceImpl implements IAuthService {
             throw new QApplicationException(e.getMessage(), ErrorType.AUTH_USER_DISABLED, null);
         }catch (AccountLockedExp e) {
             throw new QApplicationException(e.getMessage(), ErrorType.TOO_MANY_REQUESTS, null);
-        } catch (EmailNotVerifiedException e){
+        } catch (EmailNotVerifiedException e) {
             throw new QApplicationException(e.getMessage(), ErrorType.AUTH_EMAIL_NOT_VERIFIED, null);
+        } catch (AccountDeletedException e) {
+            throw new QApplicationException(e.getMessage(), ErrorType.AUTH_ACCOUNT_DELETED, null);
         } catch (AuthenticationException e) {
             throw new QApplicationException(e.getMessage(), ErrorType.AUTH_USER_FAILED, null);
         }

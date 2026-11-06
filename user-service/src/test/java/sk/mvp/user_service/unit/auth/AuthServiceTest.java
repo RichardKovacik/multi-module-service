@@ -15,6 +15,7 @@ import sk.mvp.common.event.BaseEvent;
 import sk.mvp.common.factory.UserEventFactory;
 import sk.mvp.common.payloads.AccountRestoredPayload;
 import sk.mvp.user_service.auth.dto.request.AccountRestoreReq;
+import sk.mvp.user_service.auth.dto.request.AccountRestoreSubmitReq;
 import sk.mvp.user_service.auth.entity.VerificationTokenType;
 import sk.mvp.user_service.auth.service.impl.VerificationLinkService;
 import sk.mvp.user_service.factory.TestDataFactory;
@@ -240,6 +241,43 @@ public class AuthServiceTest {
         assertEquals("User account is active", ex.getMessage());
 
     }
+
+    @Test
+    void accuntRestoreSubmit_shouldActivateUserAndMarkTokenAsUsed_WhenRestoreTokenIsValid() {
+        // arrange
+        String tokenValue = "restore-token";
+
+        // create mock data
+        User user = TestDataFactory.createValidUserInstance();
+        user.remove();
+
+        VerificationToken verificationToken = TestDataFactory.createMockToken(
+                VerificationTokenType.ACCOUNT_RESTORE,
+                Instant.now().plusSeconds(3600));
+        verificationToken.setUser(user);
+
+        AccountRestoreSubmitReq request =
+                new AccountRestoreSubmitReq(tokenValue);
+
+        //apply mock data
+        when(verificationTokenService.getValidVerificationToken(
+                tokenValue,
+                VerificationTokenType.ACCOUNT_RESTORE))
+                .thenReturn(verificationToken);
+
+        // act
+        authService.accuntRestoreSubmit(request);
+
+        // assert
+        verify(verificationTokenService).getValidVerificationToken(
+                tokenValue,
+                VerificationTokenType.ACCOUNT_RESTORE);
+
+        assertTrue(verificationToken.isUsed());
+        assertEquals(UserStatus.ACTIVE, user.getStatus());
+    }
+
+
 
 
 }

@@ -13,11 +13,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import sk.mvp.user_service.auth.dto.request.LoginReq;
-import sk.mvp.user_service.auth.jwt.JwtConfig;
 import sk.mvp.user_service.common.exception.data.ErrorType;
 import sk.mvp.user_service.infra.reddis.IRedisService;
 import sk.mvp.user_service.auth.jwt.JwtProvider;
-import sk.mvp.user_service.integration.BaseIntegrationTest;
+import sk.mvp.user_service.integration.BaseIntegrationIT;
 
 import java.util.stream.Stream;
 
@@ -27,7 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 //@Sql(scripts = "/data-test.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS)
-public class LoginUserIT extends BaseIntegrationTest {
+public class LoginUserIT extends BaseIntegrationIT {
     @Autowired
     private MockMvc mockMvc;
 

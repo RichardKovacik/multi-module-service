@@ -3,6 +3,8 @@ package sk.mvp.user_service.infra.security;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsChecker;
 import org.springframework.stereotype.Component;
+import sk.mvp.user_service.common.exception.AccountLockedExp;
+import sk.mvp.user_service.common.exception.auth.AccountDeletedException;
 import sk.mvp.user_service.common.exception.auth.EmailNotVerifiedException;
 import sk.mvp.user_service.user.entity.UserStatus;
 
@@ -15,6 +17,10 @@ public class QPostAuthenticationChecker  implements UserDetailsChecker {
             if (customUserDetails.getUserStatus() == UserStatus.PENDING_VERIFICATION) {
                 throw new EmailNotVerifiedException("Email address is not verified.");
             }
+            if (customUserDetails.getUserStatus() == UserStatus.REMOVED) {
+                throw new AccountDeletedException("Account has been removed.");
+            }
+            //TODO: add also user_blocked_by_admin excpetion
         }
 
     }

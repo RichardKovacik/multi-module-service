@@ -15,7 +15,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import sk.mvp.user_service.common.exception.data.ErrorType;
 import sk.mvp.user_service.auth.jwt.JwtProvider;
 import sk.mvp.user_service.user.entity.User;
-import sk.mvp.user_service.integration.BaseIntegrationTest;
+import sk.mvp.user_service.integration.BaseIntegrationIT;
 import sk.mvp.user_service.user.dto.ContactResp;
 import sk.mvp.user_service.user.dto.UserProfile;
 import sk.mvp.user_service.user.repository.UserRepository;
@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-public class UserProfileIT extends BaseIntegrationTest {
+public class UserProfileIT extends BaseIntegrationIT {
     @Autowired
     private MockMvc mockMvc;
     @Autowired

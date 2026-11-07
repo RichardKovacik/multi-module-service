@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -101,8 +99,17 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
     networks:
       - mms-t-network
+    healthcheck:
+      # Ensure your app has spring-boot-starter-actuator
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health | grep -q UP || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s # Give Spring Boot time to boot and connect to DB
 
   notify-service:
     container_name: mms-notify-service-t
@@ -124,6 +131,12 @@ services:
         condition: service_healthy # Opravené na prísny start po uzdravení Kafky
     networks:
       - mms-t-network
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health | grep -q UP || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
 
 volumes:
   postgres_t_data:

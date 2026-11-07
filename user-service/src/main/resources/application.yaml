@@ -4,6 +4,7 @@ spring:
   main:
     allow-circular-references: true
   profiles:
+    active: dev
     group:
       dev:
       test:

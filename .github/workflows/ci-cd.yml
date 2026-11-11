@@ -60,6 +60,10 @@ jobs:
           set -euo pipefail
           image_namespace="${DOCKERHUB_USERNAME:-ci}"
           image_tag="sha-${GITHUB_SHA}"
+          images=(
+            "${image_namespace}/user-service:${image_tag}"
+            "${image_namespace}/notify-service:${image_tag}"
+          )
 
           docker build \
             --file user-service/Dockerfile \
@@ -75,19 +79,14 @@ jobs:
           if [[ "${GITHUB_EVENT_NAME}" == "push" && "${GITHUB_REF}" == "refs/heads/${DEFAULT_BRANCH}" ]]; then
             docker tag "${image_namespace}/user-service:${image_tag}" "${image_namespace}/user-service:latest"
             docker tag "${image_namespace}/notify-service:${image_tag}" "${image_namespace}/notify-service:latest"
+            images+=(
+              "${image_namespace}/user-service:latest"
+              "${image_namespace}/notify-service:latest"
+            )
           fi
 
           # Pass the built images to the publish job without rebuilding them.
-          docker save --output images.tar \
-            "${image_namespace}/user-service:${image_tag}" \
-            "${image_namespace}/notify-service:${image_tag}"
-
-          if [[ "${GITHUB_EVENT_NAME}" == "push" && "${GITHUB_REF}" == "refs/heads/${DEFAULT_BRANCH}" ]]; then
-            docker save --output images-latest.tar \
-              "${image_namespace}/user-service:latest" \
-              "${image_namespace}/notify-service:latest"
-            tar -rf images.tar images-latest.tar
-          fi
+          docker save --output images.tar "${images[@]}"
 
       # Store the image archive briefly so the next job can publish these exact builds.
       - name: Upload built images

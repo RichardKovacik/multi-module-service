@@ -39,8 +39,8 @@ jobs:
     needs: unit-tests
     runs-on: ubuntu-latest
     env:
-      # Docker Hub account or organization namespace where the images will be published.
-      IMAGE_NAMESPACE: mch
+      # The username is used only to name the images; the access token is used later to log in.
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
 
     steps:
@@ -58,7 +58,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          image_namespace="${IMAGE_NAMESPACE}"
+          image_namespace="${DOCKERHUB_USERNAME:-ci}"
           image_tag="sha-${GITHUB_SHA}"
 
           docker build \
@@ -105,8 +105,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      # Image namespace is separate from the credentials used to log in.
-      IMAGE_NAMESPACE: mch
       DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
 
     steps:
@@ -139,10 +137,10 @@ jobs:
           docker load --input images.tar
           image_tag="sha-${GITHUB_SHA}"
 
-          docker push "${IMAGE_NAMESPACE}/user-service:${image_tag}"
-          docker push "${IMAGE_NAMESPACE}/notify-service:${image_tag}"
+          docker push "${DOCKERHUB_USERNAME}/user-service:${image_tag}"
+          docker push "${DOCKERHUB_USERNAME}/notify-service:${image_tag}"
 
           if [[ "${GITHUB_REF}" == "refs/heads/${DEFAULT_BRANCH}" ]]; then
-            docker push "${IMAGE_NAMESPACE}/user-service:latest"
-            docker push "${IMAGE_NAMESPACE}/notify-service:latest"
+            docker push "${DOCKERHUB_USERNAME}/user-service:latest"
+            docker push "${DOCKERHUB_USERNAME}/notify-service:latest"
           fi

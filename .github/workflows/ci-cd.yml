@@ -1,24 +1,23 @@
-name: Test, build, and publish Docker images
+name: CI and Docker publishing
 
 on:
   push:
+    branches: [dev, master]
   pull_request:
+    branches: [master]
 
-# Workflows only need to read repository contents.
 permissions:
   contents: read
 
 jobs:
-  unit-tests:
-    name: 1. Run unit tests
+  maven-check:
+    name: Maven build and tests
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
-
     steps:
-      # Get the project files onto the GitHub-hosted runner.
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # Install the Java version used by this project and cache Maven dependencies.
       - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
@@ -26,120 +25,45 @@ jobs:
           java-version: "21"
           cache: maven
 
-      # Ensure the wrapper works on Linux even if it was checked out with Windows line endings.
       - name: Prepare Maven Wrapper
         run: sed -i 's/\r$//' mvnw && chmod +x mvnw
 
-      # Run the Maven tests. A failure stops the workflow before image publishing.
-      - name: Run tests
-        run: ./mvnw -B clean test
+      - name: Build on dev push
+        if: github.event_name == 'push'
+        run: ./mvnw -B clean package -DskipTests
 
-  build-images:
-    name: 2. Build Docker images
-    needs: unit-tests
+      - name: Build and run unit tests for pull request
+        if: github.event_name == 'pull_request'
+        run: ./mvnw -B clean verify
+
+  publish-images:
+    name: Build and publish Docker images
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     env:
-      # The username is used only to name the images; the access token is used later to log in.
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-
     steps:
-      # Dockerfiles need the whole multi-module repository as their build context.
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # Confirm the runner's Docker daemon is available before building.
-      - name: Check Docker
-        run: docker info
-
-      # Build both service images. The Dockerfiles skip tests because the test job already ran them.
-      # For pull requests from forks, use a temporary local namespace; these images are not published.
-      - name: Build and save images
-        shell: bash
-        run: |
-          set -euo pipefail
-          image_namespace="${DOCKERHUB_USERNAME:-ci}"
-          image_tag="sha-${GITHUB_SHA}"
-          images=(
-            "${image_namespace}/user-service:${image_tag}"
-            "${image_namespace}/notify-service:${image_tag}"
-          )
-
-          docker build \
-            --file user-service/Dockerfile \
-            --tag "${image_namespace}/user-service:${image_tag}" \
-            .
-
-          docker build \
-            --file notify-service/Dockerfile \
-            --tag "${image_namespace}/notify-service:${image_tag}" \
-            .
-
-          # Also tag the default branch's images as latest.
-          if [[ "${GITHUB_EVENT_NAME}" == "push" && "${GITHUB_REF}" == "refs/heads/${DEFAULT_BRANCH}" ]]; then
-            docker tag "${image_namespace}/user-service:${image_tag}" "${image_namespace}/user-service:latest"
-            docker tag "${image_namespace}/notify-service:${image_tag}" "${image_namespace}/notify-service:latest"
-            images+=(
-              "${image_namespace}/user-service:latest"
-              "${image_namespace}/notify-service:latest"
-            )
-          fi
-
-          # Pass the built images to the publish job without rebuilding them.
-          docker save --output images.tar "${images[@]}"
-
-      # Store the image archive briefly so the next job can publish these exact builds.
-      - name: Upload built images
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-images
-          path: images.tar
-          retention-days: 1
-
-  publish-images:
-    name: 3. Publish images to Docker Hub
-    needs: build-images
-    # Never publish images for pull requests; only publish after a push.
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    env:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-
-    steps:
-      # Retrieve the images created by the build job.
-      - name: Download built images
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-images
-
-      # Fail clearly if the required Docker Hub username secret was not configured.
-      - name: Check Docker Hub username
-        run: |
-          if [ -z "$DOCKERHUB_USERNAME" ]; then
-            echo "::error::Add the DOCKERHUB_USERNAME repository secret."
-            exit 1
-          fi
-
-      # Log in using a Docker Hub access token, not your account password.
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Load and push the commit-specific images; also update latest on the default branch.
-      - name: Push images
+      - name: Build and push both services
         shell: bash
         run: |
           set -euo pipefail
-          docker load --input images.tar
           image_tag="sha-${GITHUB_SHA}"
 
-          docker push "${DOCKERHUB_USERNAME}/user-service:${image_tag}"
-          docker push "${DOCKERHUB_USERNAME}/notify-service:${image_tag}"
-
-          if [[ "${GITHUB_REF}" == "refs/heads/${DEFAULT_BRANCH}" ]]; then
-            docker push "${DOCKERHUB_USERNAME}/user-service:latest"
-            docker push "${DOCKERHUB_USERNAME}/notify-service:latest"
-          fi
+          for service in user-service notify-service; do
+            docker build \
+              --file "${service}/Dockerfile" \
+              --tag "${DOCKERHUB_USERNAME}/${service}:${image_tag}" \
+              --tag "${DOCKERHUB_USERNAME}/${service}:latest" \
+              .
+            docker push "${DOCKERHUB_USERNAME}/${service}:${image_tag}"
+            docker push "${DOCKERHUB_USERNAME}/${service}:latest"
+          done

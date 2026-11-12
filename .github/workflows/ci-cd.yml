@@ -1,69 +1,59 @@
 name: CI and Docker publishing
 
 on:
-  push:
-    branches: [dev, master]
   pull_request:
-    branches: [master]
+    branches: [main]
+  push:
+    branches: [main]
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  maven-check:
+  maven-tests:
     name: Maven build and tests
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Java 21
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
           cache: maven
 
-      - name: Prepare Maven Wrapper
-        run: sed -i 's/\r$//' mvnw && chmod +x mvnw
-
-      - name: Build on dev push
-        if: github.event_name == 'push'
-        run: ./mvnw -B clean package -DskipTests
-
-      - name: Build and run unit tests for pull request
-        if: github.event_name == 'pull_request'
+      - name: Build and test
         run: ./mvnw -B clean verify
 
-  publish-images:
-    name: Build and publish Docker images
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+  publish-snapshot:
+    name: Publish ${{ matrix.service }} snapshot
+    needs: maven-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    env:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    strategy:
+      matrix:
+        service: [user-service, notify-service]
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push both services
-        shell: bash
-        run: |
-          set -euo pipefail
-          image_tag="sha-${GITHUB_SHA}"
-
-          for service in user-service notify-service; do
-            docker build \
-              --file "${service}/Dockerfile" \
-              --tag "${DOCKERHUB_USERNAME}/${service}:${image_tag}" \
-              --tag "${DOCKERHUB_USERNAME}/${service}:latest" \
-              .
-            docker push "${DOCKERHUB_USERNAME}/${service}:${image_tag}"
-            docker push "${DOCKERHUB_USERNAME}/${service}:latest"
-          done
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.service }}/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.service }}:snapshot
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.service }}:main-${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}

@@ -2,9 +2,9 @@ name: CI and Docker publishing
 
 on:
   pull_request:
-    branches: [main]
+    branches: [master]
   push:
-    branches: [main]
+    branches: [master]
 
 permissions:
   contents: read
@@ -26,13 +26,16 @@ jobs:
           java-version: "21"
           cache: maven
 
+      - name: Prepare Maven Wrapper
+        run: sed -i 's/\r$//' mvnw && chmod +x mvnw
+
       - name: Build and test
         run: ./mvnw -B clean verify
 
-  publish-snapshot:
-    name: Publish ${{ matrix.service }} snapshot
+  publish-images:
+    name: Build and publish ${{ matrix.service }} image
     needs: maven-tests
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -47,13 +50,20 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=snapshot,enable=${{ github.ref == 'refs/heads/master' }}
+
       - uses: docker/build-push-action@v6
         with:
           context: .
           file: ${{ matrix.service }}/Dockerfile
           push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.service }}:snapshot
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.service }}:main-${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}

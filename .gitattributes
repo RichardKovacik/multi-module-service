@@ -1,0 +1,6 @@
+# Unix scripts must always have LF endings
+mvnw        text eol=lf
+*.sh        text eol=lf
+
+# Windows script keeps CRLF
+mvnw.cmd    text eol=crlf

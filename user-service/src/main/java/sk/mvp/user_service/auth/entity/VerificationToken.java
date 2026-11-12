@@ -17,6 +17,7 @@ import java.time.Instant;
         }
 )
 public class VerificationToken {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -49,7 +50,7 @@ public class VerificationToken {
 //    }
 
     // =========================
-    // Constructors
+    // Constructors  added comment for test pipiline
     // =========================
 
     public VerificationToken() {}

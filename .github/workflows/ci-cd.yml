@@ -26,6 +26,9 @@ jobs:
           java-version: "21"
           cache: maven
 
+      - name: Prepare Maven Wrapper
+        run: sed -i 's/\r$//' mvnw && chmod +x mvnw
+
       - name: Build and test
         run: ./mvnw -B clean verify
 

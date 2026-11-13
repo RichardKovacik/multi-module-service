@@ -16,7 +16,10 @@ concurrency:
 jobs:
   maven-tests:
     name: Maven build and tests
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -29,11 +32,39 @@ jobs:
       - name: Prepare Maven Wrapper
         run: sed -i 's/\r$//' mvnw && chmod +x mvnw
 
-      - name: Build and test
-        # Runs Maven's full lifecycle, including compilation, tests, and packaging.
+      - name: Build and verify
+        # Runs Maven's full lifecycle through compilation, tests, and packaging.
         run: ./mvnw -B clean verify
 
-      # The image job runs on a separate runner, so pass it the JARs verified above.
+  publish-maven-packages:
+    name: Build, verify, and publish Maven packages
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          server-id: github-artifactory
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: Prepare Maven Wrapper
+        run: sed -i 's/\r$//' mvnw && chmod +x mvnw
+
+      - name: Build, verify, and publish
+        # Deploy includes verification and publishes the same build's Maven artifacts.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./mvnw -B clean deploy
+
+      # Pass the verified and published JARs to the separate image-build runner.
       - name: Upload service JARs
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
@@ -47,7 +78,7 @@ jobs:
   publish-images:
     name: Build and publish ${{ matrix.service }} image
     # Publish only after verification succeeds, and only for pushes to master.
-    needs: maven-tests
+    needs: publish-maven-packages
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     strategy:
@@ -63,6 +94,22 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
+      - name: Read service version from built JAR
+        id: version
+        env:
+          SERVICE: ${{ matrix.service }}
+        run: |
+          shopt -s nullglob
+          jars=("$SERVICE"/target/"$SERVICE"-*.jar)
+          if [ "${#jars[@]}" -ne 1 ]; then
+            echo "Expected exactly one packaged JAR for $SERVICE, found ${#jars[@]}" >&2
+            exit 1
+          fi
+          jar="${jars[0]##*/}"
+          version="${jar#"$SERVICE"-}"
+          version="${version%.jar}"
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+
       # Authenticate to Docker Hub so the built service image can be published.
       - uses: docker/login-action@v3
         with:
@@ -74,9 +121,9 @@ jobs:
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.service }}
           tags: |
-            type=ref,event=branch
-            type=sha,prefix=sha-
-            type=raw,value=snapshot,enable=${{ github.ref == 'refs/heads/master' }}
+            type=raw,value=${{ steps.version.outputs.value }}
+            type=raw,value=snapshot,enable=${{ contains(steps.version.outputs.value, 'SNAPSHOT') }}
+            type=sha,format=short,prefix=sha-
 
       - uses: docker/build-push-action@v6
         with:

@@ -10,9 +10,9 @@
     </parent>
 
     <artifactId>notify-service</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
     <name>notify-service</name>
-    <description>notify-service</description>
+    <description>Java microservice for handling user events</description>
     <url/>
     <licenses>
         <license/>

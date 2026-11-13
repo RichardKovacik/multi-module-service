@@ -8,9 +8,10 @@
 		<version>1.0.0-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
+
 	<groupId>sk.mvp</groupId>
 	<artifactId>user-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0-SNAPSHOT</version>
 	<name>user-service</name>
 	<description>Microservice for management users</description>
 	<url/>

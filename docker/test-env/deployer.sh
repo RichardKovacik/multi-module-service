@@ -57,7 +57,6 @@ COMPOSE_ARGS=(-f "${COMPOSE_FILE}" --env-file "${SCRIPT_DIR}/.env")
 if [[ "${MODE}" == "local" ]]; then
   echo "▶ [Local Mode] Preparing Maven build..."
   [[ -f mvnw ]] || { echo "❌ mvnw not found at repo root." >&2; exit 1; }
-  chmod +x mvnw
 
   echo "  Building JARs with Maven (skipping tests)..."
   ./mvnw clean package -DskipTests

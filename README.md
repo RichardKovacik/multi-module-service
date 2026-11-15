@@ -233,7 +233,7 @@ We have provided a bash script that handles the entire build and orchestration p
 From the **project root**, run the script using `bash`:
 
 ```bash
-bash docker/test-env/deploy-test-env.sh
+bash docker/test-env/deployer.sh
 ```
 
 ### Step 3: Check if the Environment is Running

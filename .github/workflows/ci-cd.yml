@@ -31,9 +31,5 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
-
-      - name: Prepare Maven Wrapper
-        run: sed -i 's/\r$//' mvnw && chmod +x mvnw
-
       - name: Build project and run unit tests
         run: ./mvnw -B clean verify

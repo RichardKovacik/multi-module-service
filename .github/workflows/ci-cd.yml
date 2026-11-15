@@ -30,3 +30,67 @@ jobs:
           cache: maven
       - name: Build project and run unit tests
         run: ./mvnw -B clean verify
+
+      # [CHANGE] Save only the executable service JARs so the publish job uses the tested build.
+      - name: Upload user-service JAR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: user-service-jar
+          path: user-service/target/user-service-1.0-SNAPSHOT.jar
+          if-no-files-found: error
+          retention-days: 1
+
+      # [CHANGE] Keep the notify-service JAR separate for the parallel image build.
+      - name: Upload notify-service JAR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: notify-service-jar
+          path: notify-service/target/notify-service-1.0-SNAPSHOT.jar
+          if-no-files-found: error
+          retention-days: 1
+
+  # [CHANGE] Publish only on master pushes, after tests and both JAR uploads succeed.
+  publish-docker-images:
+    name: Publish ${{ matrix.service }} image
+    needs: maven-build-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      # [CHANGE] Build and publish the two service images concurrently.
+      matrix:
+        service: [user-service, notify-service]
+    steps:
+      # [CHANGE] Include the service Dockerfile and build context in each parallel job.
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      # [CHANGE] Restore the exact tested JAR into the path expected by the service Dockerfile.
+      - name: Download service JAR
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: ${{ matrix.service }}-jar
+          path: ${{ matrix.service }}/target
+
+      # [CHANGE] Prepare Docker Buildx for building and pushing the image.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
+      # [CHANGE] Authenticate with Docker Hub using repository secrets DOCKERHUB_USERNAME and DOCKERHUB_TOKEN.
+      - name: Log in to Docker Hub
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # [CHANGE] Publish each service using the fixed snapshot tag requested.
+      - name: Build and push image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          file: ${{ matrix.service }}/ci.dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.service }}:snapshot

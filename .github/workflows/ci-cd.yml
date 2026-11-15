@@ -17,7 +17,6 @@ jobs:
   maven-build-tests:
     name: Build and test
     runs-on: ubuntu-latest
-    # [CHANGE] Bound runner time and cost if Maven hangs.
     timeout-minutes: 30
     steps:
       - name: Check out source

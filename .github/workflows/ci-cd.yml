@@ -3,8 +3,42 @@ name: Maven CI
 on:
   pull_request:
     branches: [master]
+    # [CHANGE] Run CI only when application, build, Docker, or workflow inputs change.
+    paths:
+      - "common/src/**"
+      - "user-service/src/**"
+      - "notify-service/src/**"
+      - "pom.xml"
+      - "common/pom.xml"
+      - "user-service/pom.xml"
+      - "notify-service/pom.xml"
+      - "mvnw"
+      - ".mvn/**"
+      - ".dockerignore"
+      - "user-service/Dockerfile"
+      - "notify-service/Dockerfile"
+      - "user-service/ci.dockerfile"
+      - "notify-service/ci.dockerfile"
+      - ".github/workflows/ci-cd.yml"
   push:
     branches: [master]
+    # [CHANGE] Skip README-only and other documentation-only pushes on master.
+    paths:
+      - "common/src/**"
+      - "user-service/src/**"
+      - "notify-service/src/**"
+      - "pom.xml"
+      - "common/pom.xml"
+      - "user-service/pom.xml"
+      - "notify-service/pom.xml"
+      - "mvnw"
+      - ".mvn/**"
+      - ".dockerignore"
+      - "user-service/Dockerfile"
+      - "notify-service/Dockerfile"
+      - "user-service/ci.dockerfile"
+      - "notify-service/ci.dockerfile"
+      - ".github/workflows/ci-cd.yml"
 
 permissions:
   contents: read

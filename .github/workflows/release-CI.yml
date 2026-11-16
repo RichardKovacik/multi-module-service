@@ -1,0 +1,68 @@
+name: Release CI
+
+# [CHANGE] Run this pipeline only when a version tag is pushed.
+on:
+  push:
+    tags:
+      - "v*"
+
+# [CHANGE] Grant only read access to repository contents; Docker Hub access uses secrets.
+permissions:
+  contents: read
+
+# [CHANGE] Prevent duplicate runs for the same release tag.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Java 21
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Build project and skip tests
+        run: ./mvnw -B clean package -DskipTests
+
+  publish-docker-images:
+    name: Publish ${{ matrix.service }} image
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      # [CHANGE] Build and publish both service images independently.
+      matrix:
+        service: [user-service, notify-service]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
+      # [CHANGE] Authenticate with Docker Hub using repository secrets.
+      - name: Log in to Docker Hub
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # [CHANGE] Build from each service's Dockerfile and publish using the pushed Git tag.
+      - name: Build and push image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          file: ${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.service }}:${{ github.ref_name }}

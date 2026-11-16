@@ -247,6 +247,36 @@ docker ps
 
 ---
 
+# 🔄 CI/CD Pipelines
+
+The GitHub Actions workflows in `.github/workflows/` handle validation and Docker image publishing.
+
+## `ci-cd.yml` — Pull request checks and snapshot images
+
+- **Triggers:** Pull requests to `master` and pushes to `master`, only when service/shared-library source, Maven configuration, Docker build files, or this workflow changes. README-only changes do not trigger it.
+- **Build and test:** Runs `./mvnw -B clean verify` using Java 21.
+- **Pull requests:** Run build and tests; they do not publish Docker images.
+- **Pushes to `master`:** Upload the service JAR artifacts, then build and push both images with the `snapshot` tag.
+- **Docker Hub secrets:** Requires `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` to be configured in the GitHub repository.
+
+## `release-CI.yml` — Versioned release images
+
+- **Trigger:** A Git tag matching `v*` is pushed (for example, `v1.2.0`). This is tag-triggered; README-only branch pushes do not trigger a release.
+- **Build:** Packages the Maven project with tests skipped using `./mvnw -B clean package -DskipTests`.
+- **Publish:** Builds and pushes both service images to Docker Hub, tagged with the Git tag, for example `your-dockerhub-user/user-service:v1.2.0` and `your-dockerhub-user/notify-service:v1.2.0`.
+- **Docker Hub secrets:** Uses the same `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` repository secrets.
+
+To publish a release, push a version tag:
+
+```bash
+git tag v1.2.0
+git push origin v1.2.0
+```
+
+The release workflow publishes Docker images; it does not create a GitHub Release.
+
+---
+
 # ⚙️ Environment Variables
 
 The project uses the **dev** Spring profile for local development.

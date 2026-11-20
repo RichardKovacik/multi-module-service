@@ -28,29 +28,36 @@ The project is built on a **Modular Monolith/Microservices-ready** architecture,
 
 ```mermaid
 graph LR
-    subgraph USD [USER SERVICE DOMAIN]
+    subgraph USD [USER SERVICE]
         US[User Service]:::white
         DB[(PostgreSQL)]:::blue
-        OB[(Outbox Table)]:::blue
+        OB[(Transactional Outbox)]:::blue
+        PUB[Outbox Publisher]:::white
         RD[(Redis Cache)]:::red
-        US --- DB
-        US --- OB
+        US -->|persists user data| DB
+        US -->|stores events in the transaction| OB
+        DB -. contains .- OB
+        OB -->|publishes pending events| PUB
         US --- RD
     end
 
-    US -- "produce event" --> K([ / / / KAFKA BROKER / / / ]):::yellow
-
-    subgraph ND [NOTIFICATION DOMAIN]
-        K -- "consume event" --> NS[Notification Service]:::white
-        NS --- E[(Event Store)]:::green
-        NS --> ES[Email Service]:::gray
+    subgraph KD [KAFKA BROKER]
+        TOPIC[["user-event-topic"]]:::yellow
     end
+
+    PUB -->|User Service produces events| TOPIC
+
+    subgraph ND [NOTIFICATION SERVICE]
+        NS[Notification Service]:::white
+        NS -->|sends notification| ES[Email Service]:::gray
+    end
+
+    TOPIC -->|Notification Service consumes events| NS
 
     classDef white fill:#fff,stroke:#333,color:#000
     classDef blue fill:#aaccff,stroke:#333,color:#000
     classDef red fill:#ffaaaa,stroke:#333,color:#000
     classDef yellow fill:#ffcc00,stroke:#333,color:#000,stroke-width:3px
-    classDef green fill:#ccffcc,stroke:#333,color:#000
     classDef gray fill:#eeeeee,stroke:#333,color:#000
 ```
 ---

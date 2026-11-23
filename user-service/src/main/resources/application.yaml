@@ -67,7 +67,6 @@ app:
   backend:
     protocol: http
     domain: localhost
-    port: ${SERVER_PORT}
     uri:
       email-verification: /api/v1/auth/email/confirm
       password-reset: /api/v1/auth/password/reset/validate-token

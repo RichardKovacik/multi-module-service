@@ -1,111 +1,178 @@
 package sk.mvp.user_service.unit.user;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import sk.mvp.user_service.common.exception.QApplicationException;
 import sk.mvp.user_service.common.exception.data.ErrorType;
-import sk.mvp.user_service.user.entity.Contact;
-import sk.mvp.user_service.user.entity.Gender;
-import sk.mvp.user_service.user.entity.Role;
-import sk.mvp.user_service.user.entity.User;
+import sk.mvp.user_service.factory.TestDataFactory;
 import sk.mvp.user_service.user.dto.ContactResp;
 import sk.mvp.user_service.user.dto.UserProfile;
+import sk.mvp.user_service.user.entity.User;
 import sk.mvp.user_service.user.repository.UserRepository;
 import sk.mvp.user_service.user.service.UserServiceImpl;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class UserServiceImplTest {
     @Mock
     private UserRepository userRepository;
+
     @InjectMocks
     private UserServiceImpl userService;
 
-//    public static User createDefaultUser(String userName) {
-//        Contact contact = new Contact();
-//        contact.setEmail("john.doe@example.com");
-//        // ... ďalšie polia kontaktu
-//
-//        User user = new User(
-//                userName,
-//                "securePass123",
-//                contact,
-//                Gender.MALE
-//        );
-//
-//        // Prepojenie oboch strán vzťahu (bi-directional mapping)
-//        contact.setUser(user);
-//
-//        user.setFirstName("John");
-//        user.setLastName("Doe");
-//        user.setRoles(new HashSet<>(Collections.singletonList(new Role("USER"))));
-//
-//        return user;
-//    }
-//
-//    private static UserProfile createUpdateDto(String newFirst, String newLast, String newEmail, String newPhone) {
-//        UserProfile dto = new UserProfile();
-//        ReflectionTestUtils.setField(dto, "firstName", newFirst);
-//        ReflectionTestUtils.setField(dto, "lastName", newLast);
-//        ReflectionTestUtils.setField(dto, "contact", new ContactResp(newEmail, newPhone));
-//        return dto;
-//    }
-//
-//
-//    //testing bussines logic of mapping data form repository enityti user -> DTO object profile
-//    @Test
-//    void getUserByUsername_ShouldReturnUser_WhenUserExists() {
-//        User mockUser = createDefaultUser("johnybee");
-//        //aaa patern
-//        when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(mockUser));
-//        //act
-//        UserProfile profile = userService.getUserByUsername(mockUser.getUsername());
-//        //assert
-//        assertEquals(mockUser.getUsername(), profile.getUsername());
-//        assertEquals(mockUser.getFirstName(), profile.getFirstName());
-//        assertEquals(mockUser.getLastName(), profile.getLastName());
-//        assertEquals(mockUser.getContact().getEmail(), profile.getContact().email());
-//
-//    }
-//    @Test
-//    void getUserByUsername_ShouldReturnException_WhenUserDoesNotExist() {
-//        when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
-//
-//       QApplicationException exception =
-//               assertThrows(QApplicationException.class, () -> userService.getUserByUsername(anyString()));
-//       assertEquals(exception.getErrorType(), ErrorType.USER_NOT_FOUND);
-//    }
-//
-//    @Test
-//    void updateUserProfile_ShouldUpdateFields_WhenValidDataProvided() {
-//        UserProfile updateDto = createUpdateDto("JohnNew", "DoeNew", "johnNew.doe@example.com", "77777");
-//        User mockUser = createDefaultUser("johnybee");
-//
-//        //arrange
-//        when(userRepository.findByUsername(mockUser.getUsername())).thenReturn(Optional.of(mockUser));
-//
-//        //act
-//        userService.updateUserProfile(mockUser.getUsername(), updateDto);
-//        //assert
-//        assertEquals(mockUser.getFirstName(), updateDto.getFirstName());
-//        assertEquals(mockUser.getLastName(), updateDto.getLastName());
-//        assertEquals(mockUser.getContact().getEmail(), updateDto.getContact().email());
-//        assertEquals(mockUser.getContact().getPhoneNumber(), updateDto.getContact().phoneNumber());
-//
-//        verify(userRepository, times(1)).findByUsername(mockUser.getUsername());
-//
-//
-//    }
+    @Test
+    void getUserByUsername_ShouldReturnProfile_WhenUserExists() {
+        // Arrange
+        User user = TestDataFactory.createValidUserInstance();
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        when(userRepository.findByUsername("username")).thenReturn(Optional.of(user));
+
+        // Act
+        UserProfile result = userService.getUserByUsername("username");
+
+        // Assert
+        assertEquals("username", result.getUsername());
+        assertEquals("John", result.getFirstName());
+        assertEquals("Doe", result.getLastName());
+        assertEquals("M", result.getGenderCode());
+        assertEquals(new ContactResp(user.getContact().getEmail(), user.getContact().getPhoneNumber()),
+                result.getContact());
+        verify(userRepository).findByUsername("username");
+    }
+
+    @Test
+    void getUserByUsername_ShouldThrowIllegalArgumentException_WhenUsernameIsNull() {
+        // Arrange
+        String username = null;
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> userService.getUserByUsername(username));
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void getUserByUsername_ShouldThrowIllegalArgumentException_WhenUsernameIsEmpty() {
+        // Arrange
+        String username = "";
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> userService.getUserByUsername(username));
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void getUserByUsername_ShouldThrowQApplicationException_WhenUserDoesNotExist() {
+        // Arrange
+        when(userRepository.findByUsername("missing")).thenReturn(Optional.empty());
+
+        // Act
+        QApplicationException exception = assertThrows(QApplicationException.class,
+                () -> userService.getUserByUsername("missing"));
+
+        // Assert
+        assertEquals(ErrorType.USER_NOT_FOUND, exception.getErrorType());
+        verify(userRepository).findByUsername("missing");
+    }
+
+    @Test
+    void updateUserProfile_ShouldUpdateProvidedFields_WhenUserExists() {
+        // Arrange
+        User user = TestDataFactory.createValidUserInstance();
+        UserProfile update = new UserProfile();
+        update.setFirstName("UpdatedFirst");
+        update.setLastName("UpdatedLast");
+        update.setContact(new ContactResp("updated@example.com", "555-0123"));
+        when(userRepository.findByUsername("username")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail("updated@example.com")).thenReturn(Optional.empty());
+
+        // Act
+        userService.updateUserProfile("username", update);
+
+        // Assert
+        assertEquals("UpdatedFirst", user.getFirstName());
+        assertEquals("UpdatedLast", user.getLastName());
+        assertEquals("updated@example.com", user.getContact().getEmail());
+        assertEquals("555-0123", user.getContact().getPhoneNumber());
+        verify(userRepository).findByUsername("username");
+        verify(userRepository).findByEmail("updated@example.com");
+    }
+
+    @Test
+    void updateUserProfile_ShouldPreserveExistingValues_WhenFieldsAreNullOrEmpty() {
+        // Arrange
+        User user = TestDataFactory.createValidUserInstance();
+        String originalFirstName = user.getFirstName();
+        String originalLastName = user.getLastName();
+        String originalEmail = user.getContact().getEmail();
+        String originalPhoneNumber = user.getContact().getPhoneNumber();
+        UserProfile update = new UserProfile();
+        update.setFirstName("");
+        update.setLastName(null);
+        update.setContact(new ContactResp(originalEmail, ""));
+        when(userRepository.findByUsername("username")).thenReturn(Optional.of(user));
+
+        // Act
+        userService.updateUserProfile("username", update);
+
+        // Assert
+        assertEquals(originalFirstName, user.getFirstName());
+        assertEquals(originalLastName, user.getLastName());
+        assertEquals(originalEmail, user.getContact().getEmail());
+        assertEquals(originalPhoneNumber, user.getContact().getPhoneNumber());
+        verify(userRepository, never()).findByEmail(anyString());
+    }
+
+    @Test
+    void updateUserProfile_ShouldThrowQApplicationException_WhenEmailIsAlreadyInUse() {
+        // Arrange
+        User user = TestDataFactory.createValidUserInstance();
+        User anotherUser = TestDataFactory.createValidUserInstance();
+        UserProfile update = new UserProfile();
+        update.setContact(new ContactResp("taken@example.com", null));
+        when(userRepository.findByUsername("username")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail("taken@example.com")).thenReturn(Optional.of(anotherUser));
+
+        // Act
+        QApplicationException exception = assertThrows(QApplicationException.class,
+                () -> userService.updateUserProfile("username", update));
+
+        // Assert
+        assertEquals(ErrorType.EMAIL_DUPLICATED, exception.getErrorType());
+        assertNotEquals("taken@example.com", user.getContact().getEmail());
+        verify(userRepository).findByEmail("taken@example.com");
+    }
+
+    @Test
+    void updateUserProfile_ShouldThrowIllegalArgumentException_WhenUsernameIsNull() {
+        // Arrange
+        UserProfile update = new UserProfile();
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> userService.updateUserProfile(null, update));
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void updateUserProfile_ShouldThrowQApplicationException_WhenUserDoesNotExist() {
+        // Arrange
+        UserProfile update = new UserProfile();
+        when(userRepository.findByUsername("missing")).thenReturn(Optional.empty());
+
+        // Act
+        QApplicationException exception = assertThrows(QApplicationException.class,
+                () -> userService.updateUserProfile("missing", update));
+
+        // Assert
+        assertEquals(ErrorType.USER_NOT_FOUND, exception.getErrorType());
+        verify(userRepository).findByUsername("missing");
+        verify(userRepository, never()).findByEmail(anyString());
+    }
 }

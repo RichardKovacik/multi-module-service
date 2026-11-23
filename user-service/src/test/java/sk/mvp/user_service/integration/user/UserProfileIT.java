@@ -39,7 +39,7 @@ public class UserProfileIT extends BaseIntegrationIT {
     private EntityManager entityManager;
 
 
-    // helper
+    // move to helper class
     private Cookie createAuthCookie(User user) {
         String accessToken = jwtProvider.generateAccessToken(user.getUsername(),
                 user.getTokenVersion(),
